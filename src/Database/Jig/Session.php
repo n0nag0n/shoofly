@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
 
@@ -20,9 +21,9 @@
 
 */
 
-namespace DB\SQL;
+namespace Shoofly\Database\Jig;
 
-//! SQL-managed session handler
+//! Jig-managed session handler
 class Session extends Mapper {
 
 	protected
@@ -63,14 +64,15 @@ class Session extends Mapper {
 	*	@param $id string
 	**/
 	function read($id) {
-		$this->load(['session_id=?',$this->sid=$id]);
+		$this->load(['@session_id=?',$this->sid=$id]);
 		if ($this->dry())
 			return '';
 		if ($this->get('ip')!=$this->_ip || $this->get('agent')!=$this->_agent) {
 			$fw=\Base::instance();
 			if (!isset($this->onsuspect) ||
 				$fw->call($this->onsuspect,[$this,$id])===FALSE) {
-				//NB: `session_destroy` can't be called at that stage (`session_start` not completed)
+				// NB: `session_destroy` can't be called at that stage;
+				// `session_start` not completed
 				$this->destroy($id);
 				$this->close();
 				unset($fw->{'COOKIE.'.session_name()});
@@ -102,7 +104,7 @@ class Session extends Mapper {
 	*	@param $id string
 	**/
 	function destroy($id) {
-		$this->erase(['session_id=?',$id]);
+		$this->erase(['@session_id=?',$id]);
 		return TRUE;
 	}
 
@@ -112,30 +114,30 @@ class Session extends Mapper {
 	*	@param $max int
 	**/
 	function cleanup($max) {
-		$this->erase(['stamp+?<?',$max,time()]);
+		$this->erase(['@stamp+?<?',$max,time()]);
 		return TRUE;
 	}
 
 	/**
-	*	Return session id (if session has started)
-	*	@return string|NULL
-	**/
+	 *	Return session id (if session has started)
+	 *	@return string|NULL
+	 **/
 	function sid() {
 		return $this->sid;
 	}
 
 	/**
-	*	Return anti-CSRF token
-	*	@return string
-	**/
+	 *	Return anti-CSRF token
+	 *	@return string
+	 **/
 	function csrf() {
 		return $this->_csrf;
 	}
 
 	/**
-	*	Return IP address
-	*	@return string
-	**/
+	 *	Return IP address
+	 *	@return string
+	 **/
 	function ip() {
 		return $this->_ip;
 	}
@@ -152,7 +154,7 @@ class Session extends Mapper {
 
 	/**
 	*	Return HTTP user agent
-	*	@return string
+	*	@return string|FALSE
 	**/
 	function agent() {
 		return $this->_agent;
@@ -160,39 +162,13 @@ class Session extends Mapper {
 
 	/**
 	*	Instantiate class
-	*	@param $db \DB\SQL
-	*	@param $table string
-	*	@param $force bool
+	*	@param $db \DB\Jig
+	*	@param $file string
 	*	@param $onsuspect callback
 	*	@param $key string
-	*	@param $type string, column type for data field
 	**/
-	function __construct(\DB\SQL $db,$table='sessions',$force=TRUE,$onsuspect=NULL,$key=NULL,$type='TEXT') {
-		if ($force) {
-			$eol="\n";
-			$tab="\t";
-			$sqlsrv=preg_match('/mssql|sqlsrv|sybase/',$db->driver());
-			$db->exec(
-				($sqlsrv?
-					('IF NOT EXISTS (SELECT * FROM sysobjects WHERE '.
-						'name='.$db->quote($table).' AND xtype=\'U\') '.
-						'CREATE TABLE dbo.'):
-					('CREATE TABLE IF NOT EXISTS '.
-						((($name=$db->name())&&$db->driver()!='pgsql')?
-							($db->quotekey($name,FALSE).'.'):''))).
-				$db->quotekey($table,FALSE).' ('.$eol.
-					($sqlsrv?$tab.$db->quotekey('id').' INT IDENTITY,'.$eol:'').
-					$tab.$db->quotekey('session_id').' VARCHAR(255),'.$eol.
-					$tab.$db->quotekey('data').' '.$type.','.$eol.
-					$tab.$db->quotekey('ip').' VARCHAR(45),'.$eol.
-					$tab.$db->quotekey('agent').' VARCHAR(300),'.$eol.
-					$tab.$db->quotekey('stamp').' INTEGER,'.$eol.
-					$tab.'PRIMARY KEY ('.$db->quotekey($sqlsrv?'id':'session_id').')'.$eol.
-				($sqlsrv?',CONSTRAINT [UK_session_id] UNIQUE(session_id)':'').
-				');'
-			);
-		}
-		parent::__construct($db,$table);
+	function __construct(\DB\Jig $db,$file='sessions',$onsuspect=NULL,$key=NULL) {
+		parent::__construct($db,$file);
 		$this->onsuspect=$onsuspect;
 		session_set_save_handler(
 			[$this,'open'],
@@ -213,9 +189,6 @@ class Session extends Mapper {
 		if ($key)
 			$fw->$key=$this->_csrf;
 		$this->_agent=isset($headers['User-Agent'])?$headers['User-Agent']:'';
-		if (strlen($this->_agent) > 300) {
-			$this->_agent = substr($this->_agent, 0, 300);
-		}
 		$this->_ip=$fw->IP;
 	}
 

@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
 
@@ -20,7 +21,7 @@
 
 */
 
-namespace DB;
+namespace Shoofly\Database;
 
 //! MongoDB wrapper
 class Mongo {

@@ -1,4 +1,7 @@
 <?php
+declare(strict_types=1);
+
+namespace Shoofly\Cli;
 
 /*
 
@@ -23,7 +26,7 @@
 namespace CLI;
 
 //! RFC6455 WebSocket server
-class WS {
+class Websocket {
 
 	const
 		//! UUID magic string

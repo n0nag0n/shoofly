@@ -1,5 +1,10 @@
 <?php
 
+namespace Shoofly;
+
+use ArrayAccess;
+use ReflectionClass;
+
 /*
 
 	Copyright (c) 2009-2023 F3::Factory/Bong Cosca, All rights reserved.
@@ -20,128 +25,103 @@
 
 */
 
-//! Factory class for single-instance objects
-abstract class Prefab {
+//! Base structure
+class Application extends Prefab implements ArrayAccess {
+
+	const PACKAGE='Shoofly';
+	const VERSION='6.0.0-beta';
 
 	/**
-	*	Return class instance
-	*	@return static
-	**/
-	static function instance() {
-		if (!Registry::exists($class=get_called_class())) {
-			$ref=new ReflectionClass($class);
-			$args=func_get_args();
-			Registry::set($class,
-				$args?$ref->newinstanceargs($args):new $class);
-		}
-		return Registry::get($class);
-	}
+	 * HTTP Status Codes
+	 */
+	const HTTP_100='Continue';
+	const HTTP_101='Switching Protocols';
+	const HTTP_103='Early Hints';
+	const HTTP_200='OK';
+	const HTTP_201='Created';
+	const HTTP_202='Accepted';
+	const HTTP_203='Non-Authoritative Information';
+	const HTTP_204='No Content';
+	const HTTP_205='Reset Content';
+	const HTTP_206='Partial Content';
+	const HTTP_300='Multiple Choices';
+	const HTTP_301='Moved Permanently';
+	const HTTP_302='Found';
+	const HTTP_303='See Other';
+	const HTTP_304='Not Modified';
+	const HTTP_305='Use Proxy';
+	const HTTP_307='Temporary Redirect';
+	const HTTP_308='Permanent Redirect';
+	const HTTP_400='Bad Request';
+	const HTTP_401='Unauthorized';
+	const HTTP_402='Payment Required';
+	const HTTP_403='Forbidden';
+	const HTTP_404='Not Found';
+	const HTTP_405='Method Not Allowed';
+	const HTTP_406='Not Acceptable';
+	const HTTP_407='Proxy Authentication Required';
+	const HTTP_408='Request Timeout';
+	const HTTP_409='Conflict';
+	const HTTP_410='Gone';
+	const HTTP_411='Length Required';
+	const HTTP_412='Precondition Failed';
+	const HTTP_413='Request Entity Too Large';
+	const HTTP_414='Request-URI Too Long';
+	const HTTP_415='Unsupported Media Type';
+	const HTTP_416='Requested Range Not Satisfiable';
+	const HTTP_417='Expectation Failed';
+	const HTTP_421='Misdirected Request';
+	const HTTP_422='Unprocessable Entity';
+	const HTTP_423='Locked';
+	const HTTP_429='Too Many Requests';
+	const HTTP_451='Unavailable For Legal Reasons';
+	const HTTP_500='Internal Server Error';
+	const HTTP_501='Not Implemented';
+	const HTTP_502='Bad Gateway';
+	const HTTP_503='Service Unavailable';
+	const HTTP_504='Gateway Timeout';
+	const HTTP_505='HTTP Version Not Supported';
+	const HTTP_507='Insufficient Storage';
+	const HTTP_511='Network Authentication Required';
 
-}
+	/**
+	 * General Constants
+	 */
+	const GLOBALS='GET|POST|COOKIE|REQUEST|SESSION|FILES|SERVER|ENV';
+	const VERBS='GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT|OPTIONS';
+	const MODE=0755;
+	const CSS='code.css';
 
-//! Base structure
-final class Base extends Prefab implements ArrayAccess {
+	/**
+	 * Request Types
+	 */
+	const REQ_SYNC=1;
+	const REQ_AJAX=2;
+	const REQ_CLI=4;
 
-	//@{ Framework details
-	const
-		PACKAGE='Fat-Free Framework',
-		VERSION='3.8.2-Release';
-	//@}
+	/**
+	 * Route Error Codes
+	 */
+	const E_Pattern='Invalid routing pattern: %s';
+	const E_Named='Named route does not exist: %s';
+	const E_Alias='Invalid named route alias: %s';
+	const E_Fatal='Fatal error: %s';
+	const E_Open='Unable to open %s';
+	const E_Routes='No routes specified';
+	const E_Class='Invalid class %s';
+	const E_Method='Invalid method %s';
+	const E_Hive='Invalid hive key %s';
 
-	//@{ HTTP status codes (RFC 2616)
-	const
-		HTTP_100='Continue',
-		HTTP_101='Switching Protocols',
-		HTTP_103='Early Hints',
-		HTTP_200='OK',
-		HTTP_201='Created',
-		HTTP_202='Accepted',
-		HTTP_203='Non-Authorative Information',
-		HTTP_204='No Content',
-		HTTP_205='Reset Content',
-		HTTP_206='Partial Content',
-		HTTP_300='Multiple Choices',
-		HTTP_301='Moved Permanently',
-		HTTP_302='Found',
-		HTTP_303='See Other',
-		HTTP_304='Not Modified',
-		HTTP_305='Use Proxy',
-		HTTP_307='Temporary Redirect',
-		HTTP_308='Permanent Redirect',
-		HTTP_400='Bad Request',
-		HTTP_401='Unauthorized',
-		HTTP_402='Payment Required',
-		HTTP_403='Forbidden',
-		HTTP_404='Not Found',
-		HTTP_405='Method Not Allowed',
-		HTTP_406='Not Acceptable',
-		HTTP_407='Proxy Authentication Required',
-		HTTP_408='Request Timeout',
-		HTTP_409='Conflict',
-		HTTP_410='Gone',
-		HTTP_411='Length Required',
-		HTTP_412='Precondition Failed',
-		HTTP_413='Request Entity Too Large',
-		HTTP_414='Request-URI Too Long',
-		HTTP_415='Unsupported Media Type',
-		HTTP_416='Requested Range Not Satisfiable',
-		HTTP_417='Expectation Failed',
-		HTTP_421='Misdirected Request',
-		HTTP_422='Unprocessable Entity',
-		HTTP_423='Locked',
-		HTTP_429='Too Many Requests',
-		HTTP_451='Unavailable For Legal Reasons',
-		HTTP_500='Internal Server Error',
-		HTTP_501='Not Implemented',
-		HTTP_502='Bad Gateway',
-		HTTP_503='Service Unavailable',
-		HTTP_504='Gateway Timeout',
-		HTTP_505='HTTP Version Not Supported',
-		HTTP_507='Insufficient Storage',
-		HTTP_511='Network Authentication Required';
-	//@}
-
-	const
-		//! Mapped PHP globals
-		GLOBALS='GET|POST|COOKIE|REQUEST|SESSION|FILES|SERVER|ENV',
-		//! HTTP verbs
-		VERBS='GET|HEAD|POST|PUT|PATCH|DELETE|CONNECT|OPTIONS',
-		//! Default directory permissions
-		MODE=0755,
-		//! Syntax highlighting stylesheet
-		CSS='code.css';
-
-	//@{ Request types
-	const
-		REQ_SYNC=1,
-		REQ_AJAX=2,
-		REQ_CLI=4;
-	//@}
-
-	//@{ Error messages
-	const
-		E_Pattern='Invalid routing pattern: %s',
-		E_Named='Named route does not exist: %s',
-		E_Alias='Invalid named route alias: %s',
-		E_Fatal='Fatal error: %s',
-		E_Open='Unable to open %s',
-		E_Routes='No routes specified',
-		E_Class='Invalid class %s',
-		E_Method='Invalid method %s',
-		E_Hive='Invalid hive key %s';
-	//@}
-
-	private
-		//! Globals
-		$hive,
-		//! Initial settings
-		$init,
-		//! Language lookup sequence
-		$languages,
-		//! Mutex locks
-		$locks=[],
-		//! Default fallback language
-		$fallback='en';
+	/** @var string Where vars are stored */
+	protected $hive = [];
+	/** @var string Initial settings */
+	protected $init = [];
+	/** @var string Language lookup sequence */
+	protected $languages = [];
+	/** @var string Mutex locks */
+	protected $locks = [];
+	/** @var string Default fallback language */
+	protected $fallback = 'en';
 
 	/**
 	*	Sync PHP global with corresponding hive key

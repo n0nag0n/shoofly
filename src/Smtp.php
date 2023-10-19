@@ -21,7 +21,7 @@
 */
 
 //! SMTP plug-in
-class SMTP extends Magic {
+class Smtp extends Magic {
 
 	//@{ Locale-specific error/exception messages
 	const

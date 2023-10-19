@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
 
@@ -20,7 +21,7 @@
 
 */
 
-namespace DB\Jig;
+namespace Shoofly\Database\Jig;
 
 //! Flat-file DB mapper
 class Mapper extends \DB\Cursor {

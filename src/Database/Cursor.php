@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
 
@@ -20,7 +21,7 @@
 
 */
 
-namespace DB;
+namespace Shoofly\Database;
 
 //! Simple cursor implementation
 abstract class Cursor extends \Magic implements \IteratorAggregate {

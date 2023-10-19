@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /*
 
@@ -20,9 +21,9 @@
 
 */
 
-namespace DB\Jig;
+namespace Shoofly\Database\Mongo;
 
-//! Jig-managed session handler
+//! MongoDB-managed session handler
 class Session extends Mapper {
 
 	protected
@@ -63,7 +64,7 @@ class Session extends Mapper {
 	*	@param $id string
 	**/
 	function read($id) {
-		$this->load(['@session_id=?',$this->sid=$id]);
+		$this->load(['session_id'=>$this->sid=$id]);
 		if ($this->dry())
 			return '';
 		if ($this->get('ip')!=$this->_ip || $this->get('agent')!=$this->_agent) {
@@ -103,7 +104,7 @@ class Session extends Mapper {
 	*	@param $id string
 	**/
 	function destroy($id) {
-		$this->erase(['@session_id=?',$id]);
+		$this->erase(['session_id'=>$id]);
 		return TRUE;
 	}
 
@@ -113,7 +114,7 @@ class Session extends Mapper {
 	*	@param $max int
 	**/
 	function cleanup($max) {
-		$this->erase(['@stamp+?<?',$max,time()]);
+		$this->erase(['$where'=>'this.stamp+'.$max.'<'.time()]);
 		return TRUE;
 	}
 
@@ -142,9 +143,9 @@ class Session extends Mapper {
 	}
 
 	/**
-	*	Return Unix timestamp
-	*	@return string|FALSE
-	**/
+	 *	Return Unix timestamp
+	 *	@return string|FALSE
+	 **/
 	function stamp() {
 		if (!$this->sid)
 			session_start();
@@ -152,22 +153,22 @@ class Session extends Mapper {
 	}
 
 	/**
-	*	Return HTTP user agent
-	*	@return string|FALSE
-	**/
+	 *	Return HTTP user agent
+	 *	@return string
+	 **/
 	function agent() {
 		return $this->_agent;
 	}
 
 	/**
 	*	Instantiate class
-	*	@param $db \DB\Jig
-	*	@param $file string
+	*	@param $db \DB\Mongo
+	*	@param $table string
 	*	@param $onsuspect callback
 	*	@param $key string
 	**/
-	function __construct(\DB\Jig $db,$file='sessions',$onsuspect=NULL,$key=NULL) {
-		parent::__construct($db,$file);
+	function __construct(\DB\Mongo $db,$table='sessions',$onsuspect=NULL,$key=NULL) {
+		parent::__construct($db,$table);
 		$this->onsuspect=$onsuspect;
 		session_set_save_handler(
 			[$this,'open'],
