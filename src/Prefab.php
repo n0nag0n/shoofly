@@ -5,8 +5,6 @@ namespace Shoofly;
 
 use ReflectionClass;
 
-
-
 //! Factory class for single-instance objects
 abstract class Prefab {
 
