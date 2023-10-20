@@ -257,7 +257,7 @@ class Utf extends Prefab
         // skeptic
             '8O' => '\u1f632',
         // oops
-        ] + Application::instance()->EMOJI);
+        ] + Base::instance()->EMOJI);
         return $this->translate(
             str_replace(
                 array_keys($map),

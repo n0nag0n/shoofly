@@ -2,362 +2,419 @@
 
 /*
 
-	Copyright (c) 2009-2019 F3::Factory/Bong Cosca, All rights reserved.
+    Copyright (c) 2009-2019 F3::Factory/Bong Cosca, All rights reserved.
 
-	This file is part of the Fat-Free Framework (http://fatfreeframework.com).
+    This file is part of the Fat-Free Framework (http://fatfreeframework.com).
 
-	This is free software: you can redistribute it and/or modify it under the
-	terms of the GNU General Public License as published by the Free Software
-	Foundation, either version 3 of the License, or later.
+    This is free software: you can redistribute it and/or modify it under the
+    terms of the GNU General Public License as published by the Free Software
+    Foundation, either version 3 of the License, or later.
 
-	Fat-Free Framework is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-	General Public License for more details.
+    Fat-Free Framework is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    General Public License for more details.
 
-	You should have received a copy of the GNU General Public License along
-	with Fat-Free Framework.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License along
+    with Fat-Free Framework.  If not, see <http://www.gnu.org/licenses/>.
 
 */
+declare(strict_types=1);
+
+namespace Shoofly;
 
 //! SMTP plug-in
-class Smtp extends Magic {
+class Smtp extends Magic
+{
+    //@{ Locale-specific error/exception messages
+	// phpcs:disable Generic.NamingConventions.UpperCaseConstantName.ClassConstantNotUpperCase
+    public const    E_Header = '%s: header is required';
+    public const    E_Blank = 'Message must not be blank';
+    public const    E_Attach = 'Attachment %s not found';
+    public const    E_DIALOG = 'SMTP dialog error: %s';
+	// phpcs:enable Generic.NamingConventions.UpperCaseConstantName.ClassConstantNotUpperCase
+    //@}
 
-	//@{ Locale-specific error/exception messages
-	const
-		E_Header='%s: header is required',
-		E_Blank='Message must not be blank',
-		E_Attach='Attachment %s not found',
-		E_DIALOG='SMTP dialog error: %s';
-	//@}
+    //! Message properties
+    protected $headers;
+    //! E-mail attachments
+    protected $attachments;
+    //! SMTP host
+    protected $host;
+    //! SMTP port
+    protected $port;
+    //! TLS/SSL
+    protected $scheme;
+    //! User ID
+    protected $user;
+    //! Password
+    protected $pw;
+    //! TLS/SSL stream context
+    protected $context;
+    //! TCP/IP socket
+    protected $socket;
+    //! Server-client conversation
+    protected $log;
 
-	protected
-		//! Message properties
-		$headers,
-		//! E-mail attachments
-		$attachments,
-		//! SMTP host
-		$host,
-		//! SMTP port
-		$port,
-		//! TLS/SSL
-		$scheme,
-		//! User ID
-		$user,
-		//! Password
-		$pw,
-		//! TLS/SSL stream context
-		$context,
-		//! TCP/IP socket
-		$socket,
-		//! Server-client conversation
-		$log;
+    /**
+    *   Instantiate class
+    *   @param $host string
+    *   @param $port int
+    *   @param $scheme string
+    *   @param $user string
+    *   @param $pw string
+    *   @param $ctx resource
+    **/
+    public function __construct(
+        $host = 'localhost',
+        $port = 25,
+        $scheme = null,
+        $user = null,
+        $pw = null,
+        $ctx = null
+    ) {
+        $this->headers = [
+            'MIME-Version' => '1.0',
+            'Content-Type' => 'text/plain; ' .
+                'charset=' . Base::instance()->ENCODING
+        ];
+        $this->host = strtolower((($this->scheme = strtolower($scheme ?: '')) == 'ssl' ?
+            'ssl' : 'tcp') . '://' . $host);
+        $this->port = $port;
+        $this->user = $user;
+        $this->pw = $pw;
+        $this->context = stream_context_create($ctx);
+    }
 
-	/**
-	*	Fix header
-	*	@return string
-	*	@param $key string
-	**/
-	protected function fixheader($key) {
-		return str_replace(' ','-',
-			ucwords(preg_replace('/[_\-]/',' ',strtolower($key))));
-	}
+    /**
+    *   Fix header
+    *   @return string
+    *   @param $key string
+    **/
+    protected function fixheader($key)
+    {
+        return str_replace(
+            ' ',
+            '-',
+            ucwords(preg_replace('/[_\-]/', ' ', strtolower($key)))
+        );
+    }
 
-	/**
-	*	Return TRUE if header exists
-	*	@return bool
-	*	@param $key
-	**/
-	function exists($key) {
-		$key=$this->fixheader($key);
-		return isset($this->headers[$key]);
-	}
+    /**
+    *   Return TRUE if header exists
+    *   @return bool
+    *   @param $key
+    **/
+    public function exists($key)
+    {
+        $key = $this->fixheader($key);
+        return isset($this->headers[$key]);
+    }
 
-	/**
-	*	Bind value to e-mail header
-	*	@return string
-	*	@param $key string
-	*	@param $val string
-	**/
-	function set($key,$val) {
-		$key=$this->fixheader($key);
-		return $this->headers[$key]=$val;
-	}
+    /**
+    *   Bind value to e-mail header
+    *   @return string
+    *   @param $key string
+    *   @param $val string
+    **/
+    public function set($key, $val)
+    {
+        $key = $this->fixheader($key);
+        return $this->headers[$key] = $val;
+    }
 
-	/**
-	*	Return value of e-mail header
-	*	@return string|NULL
-	*	@param $key string
-	**/
-	function &get($key) {
-		$key=$this->fixheader($key);
-		if (isset($this->headers[$key]))
-			$val=&$this->headers[$key];
-		else
-			$val=NULL;
-		return $val;
-	}
+    /**
+    *   Return value of e-mail header
+    *   @return string|NULL
+    *   @param $key string
+    **/
+    public function &get($key)
+    {
+        $key = $this->fixheader($key);
+        if (isset($this->headers[$key])) {
+            $val=&$this->headers[$key];
+        } else {
+            $val = null;
+        }
+        return $val;
+    }
 
-	/**
-	*	Remove header
-	*	@return NULL
-	*	@param $key string
-	**/
-	function clear($key) {
-		$key=$this->fixheader($key);
-		unset($this->headers[$key]);
-	}
+    /**
+    *   Remove header
+    *   @return NULL
+    *   @param $key string
+    **/
+    public function clear($key)
+    {
+        $key = $this->fixheader($key);
+        unset($this->headers[$key]);
+    }
 
-	/**
-	*	Return client-server conversation history
-	*	@return string
-	**/
-	function log() {
-		return str_replace("\n",PHP_EOL,$this->log);
-	}
+    /**
+    *   Return client-server conversation history
+    *   @return string
+    **/
+    public function log()
+    {
+        return str_replace("\n", PHP_EOL, $this->log);
+    }
 
-	/**
-	*	Send SMTP command and record server response
-	*	@return string
-	*	@param $cmd string
-	*	@param $log bool|string
-	*	@param $mock bool
-	**/
-	protected function dialog($cmd=NULL,$log=TRUE,$mock=FALSE) {
-		$reply='';
-		if ($mock) {
-			$host=str_replace('ssl://','',$this->host);
-			switch ($cmd) {
-			case NULL:
-				$reply='220 '.$host.' ESMTP ready'."\n";
-				break;
-			case 'DATA':
-				$reply='354 Go ahead'."\n";
-				break;
-			case 'QUIT':
-				$reply='221 '.$host.' closing connection'."\n";
-				break;
-			default:
-				$reply='250 OK'."\n";
-				break;
-			}
-		}
-		else {
-			$socket=&$this->socket;
-			if ($cmd)
-				fputs($socket,$cmd."\r\n");
-			while (!feof($socket) && ($info=stream_get_meta_data($socket)) &&
-				!$info['timed_out'] && $str=fgets($socket,4096)) {
-				$reply.=$str;
-				if (preg_match('/(?:^|\n)\d{3} .+?\r\n/s',$reply))
-					break;
-			}
-		}
-		if ($log) {
-			if ($cmd)
-				$this->log.=$cmd."\n";
-			$this->log.=str_replace("\r",'',$reply);
-		}
-		if (preg_match('/^(4|5)\d{2}\s.*$/', $reply))
-			user_error(sprintf(self::E_DIALOG,$reply),E_USER_ERROR);
-		return $reply;
-	}
+    /**
+    *   Send SMTP command and record server response
+    *   @return string
+    *   @param $cmd string
+    *   @param $log bool|string
+    *   @param $mock bool
+    **/
+    protected function dialog($cmd = null, $log = true, $mock = false)
+    {
+        $reply = '';
+        if ($mock) {
+            $host = str_replace('ssl://', '', $this->host);
+            switch ($cmd) {
+                case null:
+                    $reply = '220 ' . $host . ' ESMTP ready' . "\n";
+                    break;
+                case 'DATA':
+                    $reply = '354 Go ahead' . "\n";
+                    break;
+                case 'QUIT':
+                    $reply = '221 ' . $host . ' closing connection' . "\n";
+                    break;
+                default:
+                    $reply = '250 OK' . "\n";
+                    break;
+            }
+        } else {
+            $socket=&$this->socket;
+            if ($cmd) {
+                fputs($socket, $cmd . "\r\n");
+            }
+            while (
+                !feof($socket) && ($info = stream_get_meta_data($socket)) &&
+                !$info['timed_out'] && $str = fgets($socket, 4096)
+            ) {
+                $reply .= $str;
+                if (preg_match('/(?:^|\n)\d{3} .+?\r\n/s', $reply)) {
+                    break;
+                }
+            }
+        }
+        if ($log) {
+            if ($cmd) {
+                $this->log .= $cmd . "\n";
+            }
+            $this->log .= str_replace("\r", '', $reply);
+        }
+        if (preg_match('/^(4|5)\d{2}\s.*$/', $reply)) {
+            user_error(sprintf(self::E_DIALOG, $reply), E_USER_ERROR);
+        }
+        return $reply;
+    }
 
-	/**
-	*	Add e-mail attachment
-	*	@return NULL
-	*	@param $file string
-	*	@param $alias string
-	*	@param $cid string
-	**/
-	function attach($file,$alias=NULL,$cid=NULL) {
-		if (!is_file($file))
-			user_error(sprintf(self::E_Attach,$file),E_USER_ERROR);
-		if ($alias)
-			$file=[$alias,$file];
-		$this->attachments[]=['filename'=>$file,'cid'=>$cid];
-	}
+    /**
+    *   Add e-mail attachment
+    *   @return NULL
+    *   @param $file string
+    *   @param $alias string
+    *   @param $cid string
+    **/
+    public function attach($file, $alias = null, $cid = null)
+    {
+        if (!is_file($file)) {
+            user_error(sprintf(self::E_Attach, $file), E_USER_ERROR);
+        }
+        if ($alias) {
+            $file = [$alias,$file];
+        }
+        $this->attachments[] = ['filename' => $file,'cid' => $cid];
+    }
 
-	/**
-	*	Transmit message
-	*	@return bool
-	*	@param $message string
-	*	@param $log bool|string
-	*	@param $mock bool
-	**/
-	function send($message,$log=TRUE,$mock=FALSE) {
-		if ($this->scheme=='ssl' && !extension_loaded('openssl'))
-			return FALSE;
-		// Message should not be blank
-		if (!$message)
-			user_error(self::E_Blank,E_USER_ERROR);
-		$fw=Base::instance();
-		// Retrieve headers
-		$headers=$this->headers;
-		// Connect to the server
-		if (!$mock) {
-			$socket=&$this->socket;
-			$socket=@stream_socket_client($this->host.':'.$this->port,
-				$errno,$errstr,ini_get('default_socket_timeout'),
-				STREAM_CLIENT_CONNECT,$this->context);
-			if (!$socket) {
-				$fw->error(500,$errstr);
-				return FALSE;
-			}
-			stream_set_blocking($socket,TRUE);
-		}
-		// Get server's initial response
-		$this->dialog(NULL,$log,$mock);
-		// Announce presence
-		$reply=$this->dialog('EHLO '.$fw->HOST,$log,$mock);
-		if (strtolower($this->scheme)=='tls') {
-			$this->dialog('STARTTLS',$log,$mock);
-			if (!$mock) {
-				$method=STREAM_CRYPTO_METHOD_TLS_CLIENT;
-				if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) {
-					$method|=STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
-					$method|=STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
-				}
-				stream_socket_enable_crypto($socket,TRUE,$method);
-			}
-			$reply=$this->dialog('EHLO '.$fw->HOST,$log,$mock);
-		}
-		$message=wordwrap($message,998);
-		if (preg_match('/8BITMIME/',$reply))
-			$headers['Content-Transfer-Encoding']='8bit';
-		else {
-			$headers['Content-Transfer-Encoding']='quoted-printable';
-			$message=preg_replace('/^\.(.+)/m',
-				'..$1',quoted_printable_encode($message));
-		}
-		if ($this->user && $this->pw && preg_match('/AUTH/',$reply)) {
-			// Authenticate
-			$this->dialog('AUTH LOGIN',$log,$mock);
-			$this->dialog(base64_encode($this->user),$log,$mock);
-			$reply=$this->dialog(base64_encode($this->pw),$log,$mock);
-			if (!preg_match('/^235\s.*/',$reply)) {
-				$this->dialog('QUIT',$log,$mock);
-				if (!$mock && $socket)
-					fclose($socket);
-				return FALSE;
-			}
-		}
-		if (empty($headers['Message-Id']))
-			$headers['Message-Id']='<'.uniqid('',TRUE).'@'.$this->host.'>';
-		if (empty($headers['Date']))
-			$headers['Date']=date('r');
-		// Required headers
-		$reqd=['From','To','Subject'];
-		foreach ($reqd as $id)
-			if (empty($headers[$id]))
-				user_error(sprintf(self::E_Header,$id),E_USER_ERROR);
-		$eol="\r\n";
-		// Stringify headers
-		foreach ($headers as $key=>&$val) {
-			if (in_array($key,['From','To','Cc','Bcc'])) {
-				$email='';
-				preg_match_all('/(?:".+?" |=\?.+?\?= )?(?:<.+?>|[^ ,]+)/',
-					$val,$matches,PREG_SET_ORDER);
-				foreach ($matches as $raw)
-					$email.=($email?', ':'').
-						(preg_match('/<.+?>/',$raw[0])?
-							$raw[0]:
-							('<'.$raw[0].'>'));
-				$val=$email;
-			}
-			unset($val);
-		}
-		$from=isset($headers['Sender'])?$headers['Sender']:strstr($headers['From'],'<');
-		unset($headers['Sender']);
-		// Start message dialog
-		$this->dialog('MAIL FROM: '.$from,$log,$mock);
-		foreach ($fw->split($headers['To'].
-			(isset($headers['Cc'])?(';'.$headers['Cc']):'').
-			(isset($headers['Bcc'])?(';'.$headers['Bcc']):'')) as $dst) {
-			$this->dialog('RCPT TO: '.strstr($dst,'<'),$log,$mock);
-		}
-		$this->dialog('DATA',$log,$mock);
-		if ($this->attachments) {
-			// Replace Content-Type
-			$type=$headers['Content-Type'];
-			unset($headers['Content-Type']);
-			$enc=$headers['Content-Transfer-Encoding'];
-			unset($headers['Content-Transfer-Encoding']);
-			$hash=uniqid('',TRUE);
-			// Send mail headers
-			$out='Content-Type: multipart/mixed; boundary="'.$hash.'"'.$eol;
-			foreach ($headers as $key=>$val)
-				if ($key!='Bcc')
-					$out.=$key.': '.$val.$eol;
-			$out.=$eol;
-			$out.='This is a multi-part message in MIME format'.$eol;
-			$out.=$eol;
-			$out.='--'.$hash.$eol;
-			$out.='Content-Type: '.$type.$eol;
-			$out.='Content-Transfer-Encoding: '.$enc.$eol;
-			$out.=$eol;
-			$out.=$message.$eol;
-			foreach ($this->attachments as $attachment) {
-				if (is_array($attachment['filename']))
-					list($alias,$file)=$attachment['filename'];
-				else
-					$alias=basename($file=$attachment['filename']);
-				$out.='--'.$hash.$eol;
-				$out.='Content-Type: application/octet-stream'.$eol;
-				$out.='Content-Transfer-Encoding: base64'.$eol;
-				if ($attachment['cid'])
-					$out.='Content-Id: '.$attachment['cid'].$eol;
-				$out.='Content-Disposition: attachment; '.
-					'filename="'.$alias.'"'.$eol;
-				$out.=$eol;
-				$out.=chunk_split(base64_encode(
-					file_get_contents($file))).$eol;
-			}
-			$out.=$eol;
-			$out.='--'.$hash.'--'.$eol;
-			$out.='.';
-			$this->dialog($out,preg_match('/verbose/i',$log),$mock);
-		}
-		else {
-			// Send mail headers
-			$out='';
-			foreach ($headers as $key=>$val)
-				if ($key!='Bcc')
-					$out.=$key.': '.$val.$eol;
-			$out.=$eol;
-			$out.=$message.$eol;
-			$out.='.';
-			// Send message
-			$this->dialog($out,preg_match('/verbose/i',$log),$mock);
-		}
-		$this->dialog('QUIT',$log,$mock);
-		if (!$mock && $socket)
-			fclose($socket);
-		return TRUE;
-	}
-
-	/**
-	*	Instantiate class
-	*	@param $host string
-	*	@param $port int
-	*	@param $scheme string
-	*	@param $user string
-	*	@param $pw string
-	*	@param $ctx resource
-	**/
-	function __construct(
-		$host='localhost',$port=25,$scheme=NULL,$user=NULL,$pw=NULL,$ctx=NULL) {
-		$this->headers=[
-			'MIME-Version'=>'1.0',
-			'Content-Type'=>'text/plain; '.
-				'charset='.Base::instance()->ENCODING
-		];
-		$this->host=strtolower((($this->scheme=strtolower($scheme?:''))=='ssl'?
-			'ssl':'tcp').'://'.$host);
-		$this->port=$port;
-		$this->user=$user;
-		$this->pw=$pw;
-		$this->context=stream_context_create($ctx);
-	}
-
+    /**
+    *   Transmit message
+    *   @return bool
+    *   @param $message string
+    *   @param $log bool|string
+    *   @param $mock bool
+    **/
+    public function send($message, $log = true, $mock = false)
+    {
+        if ($this->scheme == 'ssl' && !extension_loaded('openssl')) {
+            return false;
+        }
+        // Message should not be blank
+        if (!$message) {
+            user_error(self::E_Blank, E_USER_ERROR);
+        }
+        $fw = Base::instance();
+        // Retrieve headers
+        $headers = $this->headers;
+        // Connect to the server
+        if (!$mock) {
+            $socket=&$this->socket;
+            $socket = @stream_socket_client(
+                $this->host . ':' . $this->port,
+                $errno,
+                $errstr,
+                ini_get('default_socket_timeout'),
+                STREAM_CLIENT_CONNECT,
+                $this->context
+            );
+            if (!$socket) {
+                $fw->error(500, $errstr);
+                return false;
+            }
+            stream_set_blocking($socket, true);
+        }
+        // Get server's initial response
+        $this->dialog(null, $log, $mock);
+        // Announce presence
+        $reply = $this->dialog('EHLO ' . $fw->HOST, $log, $mock);
+        if (strtolower($this->scheme) == 'tls') {
+            $this->dialog('STARTTLS', $log, $mock);
+            if (!$mock) {
+                $method = STREAM_CRYPTO_METHOD_TLS_CLIENT;
+                if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) {
+                    $method |= STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
+                    $method |= STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
+                }
+                stream_socket_enable_crypto($socket, true, $method);
+            }
+            $reply = $this->dialog('EHLO ' . $fw->HOST, $log, $mock);
+        }
+        $message = wordwrap($message, 998);
+        if (preg_match('/8BITMIME/', $reply)) {
+            $headers['Content-Transfer-Encoding'] = '8bit';
+        } else {
+            $headers['Content-Transfer-Encoding'] = 'quoted-printable';
+            $message = preg_replace(
+                '/^\.(.+)/m',
+                '..$1',
+                quoted_printable_encode($message)
+            );
+        }
+        if ($this->user && $this->pw && preg_match('/AUTH/', $reply)) {
+            // Authenticate
+            $this->dialog('AUTH LOGIN', $log, $mock);
+            $this->dialog(base64_encode($this->user), $log, $mock);
+            $reply = $this->dialog(base64_encode($this->pw), $log, $mock);
+            if (!preg_match('/^235\s.*/', $reply)) {
+                $this->dialog('QUIT', $log, $mock);
+                if (!$mock && $socket) {
+                    fclose($socket);
+                }
+                return false;
+            }
+        }
+        if (empty($headers['Message-Id'])) {
+            $headers['Message-Id'] = '<' . uniqid('', true) . '@' . $this->host . '>';
+        }
+        if (empty($headers['Date'])) {
+            $headers['Date'] = date('r');
+        }
+        // Required headers
+        $reqd = ['From','To','Subject'];
+        foreach ($reqd as $id) {
+            if (empty($headers[$id])) {
+                user_error(sprintf(self::E_Header, $id), E_USER_ERROR);
+            }
+        }
+        $eol = "\r\n";
+        // Stringify headers
+        foreach ($headers as $key => &$val) {
+            if (in_array($key, ['From','To','Cc','Bcc'])) {
+                $email = '';
+                preg_match_all(
+                    '/(?:".+?" |=\?.+?\?= )?(?:<.+?>|[^ ,]+)/',
+                    $val,
+                    $matches,
+                    PREG_SET_ORDER
+                );
+                foreach ($matches as $raw) {
+                    $email .= ($email ? ', ' : '') .
+                        (preg_match('/<.+?>/', $raw[0]) ?
+                            $raw[0] :
+                            ('<' . $raw[0] . '>'));
+                }
+                $val = $email;
+            }
+            unset($val);
+        }
+        $from = isset($headers['Sender']) ? $headers['Sender'] : strstr($headers['From'], '<');
+        unset($headers['Sender']);
+        // Start message dialog
+        $this->dialog('MAIL FROM: ' . $from, $log, $mock);
+        foreach (
+            $fw->split($headers['To'] .
+            (isset($headers['Cc']) ? (';' . $headers['Cc']) : '') .
+            (isset($headers['Bcc']) ? (';' . $headers['Bcc']) : '')) as $dst
+        ) {
+            $this->dialog('RCPT TO: ' . strstr($dst, '<'), $log, $mock);
+        }
+        $this->dialog('DATA', $log, $mock);
+        if ($this->attachments) {
+            // Replace Content-Type
+            $type = $headers['Content-Type'];
+            unset($headers['Content-Type']);
+            $enc = $headers['Content-Transfer-Encoding'];
+            unset($headers['Content-Transfer-Encoding']);
+            $hash = uniqid('', true);
+            // Send mail headers
+            $out = 'Content-Type: multipart/mixed; boundary="' . $hash . '"' . $eol;
+            foreach ($headers as $key => $val) {
+                if ($key != 'Bcc') {
+                    $out .= $key . ': ' . $val . $eol;
+                }
+            }
+            $out .= $eol;
+            $out .= 'This is a multi-part message in MIME format' . $eol;
+            $out .= $eol;
+            $out .= '--' . $hash . $eol;
+            $out .= 'Content-Type: ' . $type . $eol;
+            $out .= 'Content-Transfer-Encoding: ' . $enc . $eol;
+            $out .= $eol;
+            $out .= $message . $eol;
+            foreach ($this->attachments as $attachment) {
+                if (is_array($attachment['filename'])) {
+                    list($alias,$file) = $attachment['filename'];
+                } else {
+                    $alias = basename($file = $attachment['filename']);
+                }
+                $out .= '--' . $hash . $eol;
+                $out .= 'Content-Type: application/octet-stream' . $eol;
+                $out .= 'Content-Transfer-Encoding: base64' . $eol;
+                if ($attachment['cid']) {
+                    $out .= 'Content-Id: ' . $attachment['cid'] . $eol;
+                }
+                $out .= 'Content-Disposition: attachment; ' .
+                    'filename="' . $alias . '"' . $eol;
+                $out .= $eol;
+                $out .= chunk_split(base64_encode(
+                    file_get_contents($file)
+                )) . $eol;
+            }
+            $out .= $eol;
+            $out .= '--' . $hash . '--' . $eol;
+            $out .= '.';
+            $this->dialog($out, preg_match('/verbose/i', $log), $mock);
+        } else {
+            // Send mail headers
+            $out = '';
+            foreach ($headers as $key => $val) {
+                if ($key != 'Bcc') {
+                    $out .= $key . ': ' . $val . $eol;
+                }
+            }
+            $out .= $eol;
+            $out .= $message . $eol;
+            $out .= '.';
+            // Send message
+            $this->dialog($out, preg_match('/verbose/i', $log), $mock);
+        }
+        $this->dialog('QUIT', $log, $mock);
+        if (!$mock && $socket) {
+            fclose($socket);
+        }
+        return true;
+    }
 }
