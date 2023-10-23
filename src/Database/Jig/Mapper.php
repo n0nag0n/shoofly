@@ -93,8 +93,8 @@ class Mapper extends Cursor
     **/
     public function &get($key)
     {
-        if ($key == '_id') {
-            return $this->db_ip;
+        if ($key == '_id' || $key == 'db_id') {
+            return $this->db_id;
         }
         if (array_key_exists($key, $this->document)) {
             return $this->document[$key];
@@ -145,7 +145,7 @@ class Mapper extends Cursor
         if (!$obj) {
             $obj = $this;
         }
-        return $obj->document + ['_id' => $this->db_ip];
+        return $obj->document + ['_id' => $this->db_id];
     }
 
     /**
@@ -440,7 +440,7 @@ class Mapper extends Cursor
     public function skip($ofs = 1)
     {
         $this->document = ($out = parent::skip($ofs)) ? $out->document : [];
-        $this->db_ip = $out ? $out->id : null;
+        $this->db_id = $out ? $out->id : null;
         if ($this->document && isset($this->trigger['load'])) {
             Base::instance()->call($this->trigger['load'], $this);
         }
@@ -453,7 +453,7 @@ class Mapper extends Cursor
     **/
     public function insert()
     {
-        if ($this->db_ip) {
+        if ($this->db_id) {
             return $this->update();
         }
         $db = $this->db;
@@ -465,8 +465,8 @@ class Mapper extends Cursor
         ) {
             usleep(mt_rand(0, 100));
         }
-        $this->db_ip = $id;
-        $pkey = ['_id' => $this->db_ip];
+        $this->db_id = $id;
+        $pkey = ['_id' => $this->db_id];
         if (
             isset($this->trigger['beforeinsert']) &&
             Base::instance()->call(
@@ -486,7 +486,7 @@ class Mapper extends Cursor
                 [$this,$pkey]
             );
         }
-        $this->load(['@_id=?',$this->db_ip]);
+        $this->load(['@_id=?',$this->db_id]);
         return $this->document;
     }
 
@@ -503,19 +503,19 @@ class Mapper extends Cursor
             isset($this->trigger['beforeupdate']) &&
             Base::instance()->call(
                 $this->trigger['beforeupdate'],
-                [$this,['_id' => $this->db_ip]]
+                [$this,['_id' => $this->db_id]]
             ) === false
         ) {
             return $this->document;
         }
-        $data[$this->db_ip] = $this->document;
+        $data[$this->db_id] = $this->document;
         $db->write($this->file, $data);
         $db->jot('(' . sprintf('%.1f', 1e3 * (microtime(true) - $now)) . 'ms) ' .
             $this->file . ' [update] ' . json_encode($this->document));
         if (isset($this->trigger['afterupdate'])) {
             Base::instance()->call(
                 $this->trigger['afterupdate'],
-                [$this,['_id' => $this->db_ip]]
+                [$this,['_id' => $this->db_id]]
             );
         }
         return $this->document;
@@ -532,7 +532,7 @@ class Mapper extends Cursor
         $db = $this->db;
         $now = microtime(true);
         $data=&$db->read($this->file);
-        $pkey = ['_id' => $this->db_ip];
+        $pkey = ['_id' => $this->db_id];
         if ($filter) {
             foreach ($this->find($filter, null, false) as $mapper) {
                 if (!$mapper->erase(null, $quick)) {
@@ -540,8 +540,8 @@ class Mapper extends Cursor
                 }
             }
             return true;
-        } elseif (isset($this->db_ip)) {
-            unset($data[$this->db_ip]);
+        } elseif (isset($this->db_id)) {
+            unset($data[$this->db_id]);
             parent::erase();
         } else {
             return false;
@@ -585,7 +585,7 @@ class Mapper extends Cursor
     **/
     public function reset()
     {
-        $this->db_ip = null;
+        $this->db_id = null;
         $this->document = [];
         parent::reset();
     }

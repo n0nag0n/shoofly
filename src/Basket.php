@@ -45,7 +45,7 @@ class Basket extends Magic
     public function __construct($key = 'basket')
     {
         $this->key = $key;
-        if (session_status() != PHP_SESSION_ACTIVE) {
+        if (session_status() != PHP_SESSION_ACTIVE && Base::instance()->CLI === false) {
             session_start();
         }
         Base::instance()->sync('SESSION');
