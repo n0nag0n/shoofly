@@ -33,7 +33,7 @@ abstract class Magic implements ArrayAccess
     *   @return bool
     *   @param $key string
     **/
-    abstract function exists($key);
+    abstract public function exists($key);
 
     /**
     *   Bind value to key
@@ -41,21 +41,21 @@ abstract class Magic implements ArrayAccess
     *   @param $key string
     *   @param $val mixed
     **/
-    abstract function set($key, $val);
+    abstract public function set($key, $val);
 
     /**
     *   Retrieve contents of key
     *   @return mixed
     *   @param $key string
     **/
-    abstract function &get($key);
+    abstract public function &get($key);
 
     /**
     *   Unset key
     *   @return NULL
     *   @param $key string
     **/
-    abstract function clear($key);
+    abstract public function clear($key);
 
     /**
     *   Convenience method for checking property value

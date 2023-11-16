@@ -30,7 +30,9 @@ use Shoofly\Web;
 class Staticmap
 {
     //! API URL
+	// phpcs:disable Generic.NamingConventions.UpperCaseConstantName.ClassConstantNotUpperCase
     public const URL_Static = 'http://maps.googleapis.com/maps/api/staticmap';
+	// phpcs:enable Generic.NamingConventions.UpperCaseConstantName.ClassConstantNotUpperCase
 
     //! Query arguments
     protected $query = array();

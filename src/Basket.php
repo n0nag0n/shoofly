@@ -112,8 +112,7 @@ class Basket extends Magic
         $out = [];
         if (isset($_SESSION[$this->key])) {
             foreach ($_SESSION[$this->key] as $id => $item) {
-                if (
-                    !isset($key) ||
+                if (!isset($key) ||
                     array_key_exists($key, $item) && $item[$key] == $val ||
                     $key == '_id' && $id == $val
                 ) {

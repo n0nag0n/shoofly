@@ -14,5 +14,11 @@
 	"require-dev": {
 		"squizlabs/php_codesniffer": "^3.7",
 		"phpunit/phpunit": "^9.6"
+	},
+	"scripts": {
+		"coverage" : "phpunit --coverage-html=.phpunit.cache/code-coverage/ --coverage-text",
+		"phpunit" : "phpunit",
+		"phpcs" : "phpcs --standard=phpcs.xml -n",
+		"phpcbf" : "phpcbf --standard=phpcs.xml"
 	}
 }

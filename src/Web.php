@@ -64,8 +64,7 @@ class Web extends Prefab
                     // only get head bytes instead of whole file
                     $bytes = fread($fhandle, 20);
                     fclose($fhandle);
-                } elseif (
-                    ($response = $this->request($file, ['method' => 'HEAD']))
+                } elseif (($response = $this->request($file, ['method' => 'HEAD']))
                     && preg_grep('/HTTP\/[\d.]{1,3} 200/', $response['headers'])
                     && ($type = preg_grep('/^Content-Type:/i', $response['headers']))
                 ) {
@@ -196,8 +195,7 @@ class Web extends Prefab
                 $list = explode(',', $list);
             }
             foreach ($accept as $mime => $q) {
-                if (
-                    $q && $out = preg_grep('/' .
+                if ($q && $out = preg_grep('/' .
                     str_replace('\*', '.*', preg_quote($mime, '/')) . '/', $list)
                 ) {
                     return current($out);
@@ -244,8 +242,7 @@ class Web extends Prefab
             $ctr = 0;
             $handle = fopen($file, 'rb');
             $start = microtime(true);
-            while (
-                !feof($handle) &&
+            while (!feof($handle) &&
                 ($info = stream_get_meta_data($handle)) &&
                 !$info['timed_out'] && !connection_aborted()
             ) {
@@ -292,8 +289,7 @@ class Web extends Prefab
                 if (!$src || !$dst) {
                     return false;
                 }
-                while (
-                    !feof($src) &&
+                while (!feof($src) &&
                     ($info = stream_get_meta_data($src)) &&
                     !$info['timed_out'] && $str = fgets($src, 4096)
                 ) {
@@ -430,8 +426,7 @@ class Web extends Prefab
         $err = curl_error($curl);
         curl_close($curl);
         $body = ob_get_clean();
-        if (
-            !$err &&
+        if (!$err &&
             $options['follow_location'] && $open_basedir &&
             preg_grep('/HTTP\/[\d.]{1,3} 3\d{2}/', $headers) &&
             preg_match('/^Location: (.+)$/m', implode(PHP_EOL, $headers), $loc)
@@ -560,8 +555,7 @@ class Web extends Prefab
                     pack("H*", dechex(ip2long(gethostbyname($hostname)))) . "\0";
                 fputs($socket, $packet, strlen($packet));
                 $response = fread($socket, 9);
-                if (
-                    strlen($response) == 8 && (ord($response[0]) == 0 || ord($response[0]) == 4)
+                if (strlen($response) == 8 && (ord($response[0]) == 0 || ord($response[0]) == 4)
                     && ord($response[1]) == 90
                 ) {
                     $options['header'][] = 'Host: ' . $hostname;
@@ -576,8 +570,7 @@ class Web extends Prefab
             }
             // Get response
             $content = '';
-            while (
-                !feof($socket) &&
+            while (!feof($socket) &&
                 ($info = stream_get_meta_data($socket)) &&
                 !$info['timed_out'] && !connection_aborted() &&
                 $str = fgets($socket, 4096)
@@ -604,8 +597,7 @@ class Web extends Prefab
                         break;
                 }
             }
-            if (
-                $options['follow_location'] &&
+            if ($options['follow_location'] &&
                 preg_grep('/HTTP\/[\d.]{1,3} 3\d{2}/', $headers) &&
                 preg_match(
                     '/Location: (.+?)' . preg_quote($eol) . '/',
@@ -720,8 +712,7 @@ class Web extends Prefab
             ]
         );
         if (isset($options['content']) && is_string($options['content'])) {
-            if (
-                $options['method'] == 'POST' &&
+            if ($options['method'] == 'POST' &&
                 !preg_grep('/^Content-Type:/i', $options['header'])
             ) {
                 $this->subst(
@@ -749,23 +740,20 @@ class Web extends Prefab
          'ignore_errors' => false
         ];
         $eol = "\r\n";
-        if (
-            $fw->CACHE &&
+        if ($fw->CACHE &&
             preg_match('/GET|HEAD/', $options['method'])
         ) {
             $cache = Cache::instance();
-            if (
-                $cache->exists(
-                    $hash = $fw->hash($options['method'] . ' ' . $url) . '.url',
-                    $data
-                )
+            if ($cache->exists(
+                $hash = $fw->hash($options['method'] . ' ' . $url) . '.url',
+                $data
+            )
             ) {
-                if (
-                    preg_match(
-                        '/Last-Modified: (.+?)' . preg_quote($eol) . '/',
-                        implode($eol, $data['headers']),
-                        $mod
-                    )
+                if (preg_match(
+                    '/Last-Modified: (.+?)' . preg_quote($eol) . '/',
+                    implode($eol, $data['headers']),
+                    $mod
+                )
                 ) {
                     $this->subst(
                         $options['header'],
@@ -776,16 +764,14 @@ class Web extends Prefab
         }
         $result = $this->{$this->wrapper}($url, $options);
         if ($result && isset($cache)) {
-            if (
-                preg_match(
-                    '/HTTP\/[\d.]{1,3} 304/',
-                    implode($eol, $result['headers'])
-                )
+            if (preg_match(
+                '/HTTP\/[\d.]{1,3} 304/',
+                implode($eol, $result['headers'])
+            )
             ) {
                 $result = $cache->get($hash);
                 $result['cached'] = true;
-            } elseif (
-                preg_match('/Cache-Control:(?:.*)max-age=(\d+)(?:,?.*' .
+            } elseif (preg_match('/Cache-Control:(?:.*)max-age=(\d+)(?:,?.*' .
                 preg_quote($eol) . ')/i', implode($eol, $result['headers']), $exp)
             ) {
                 $cache->set($hash, $result, $exp[1]);
@@ -824,14 +810,12 @@ class Web extends Prefab
         }
         foreach (array_unique($fw->split($path, false)) as $dir) {
             foreach ($files as $i => $file) {
-                if (
-                    is_file($save = $fw->fixslashes($dir . $file)) &&
+                if (is_file($save = $fw->fixslashes($dir . $file)) &&
                     is_bool(strpos($save, '../')) &&
                     preg_match('/\.(css|js)$/i', $file)
                 ) {
                     unset($files[$i]);
-                    if (
-                        $fw->CACHE &&
+                    if ($fw->CACHE &&
                         ($cached = $cache->exists(
                             $hash = $fw->hash($save) . '.' . $ext[0],
                             $data
@@ -843,13 +827,12 @@ class Web extends Prefab
                         $data = '';
                         $src = $fw->read($save);
                         for ($ptr = 0,$len = strlen($src); $ptr < $len;) {
-                            if (
-                                preg_match(
-                                    '/^@import\h+url' .
+                            if (preg_match(
+                                '/^@import\h+url' .
                                     '\(\h*([\'"])((?!(?:https?:)?\/\/).+?)\1\h*\)[^;]*;/',
-                                    substr($src, $ptr),
-                                    $parts
-                                )
+                                substr($src, $ptr),
+                                $parts
+                            )
                             ) {
                                 $path = dirname($file);
                                 $data .= $this->minify(
@@ -860,12 +843,11 @@ class Web extends Prefab
                                 $ptr += strlen($parts[0]);
                                 continue;
                             }
-                            if (
-                                $ext[0] == 'css' && preg_match(
-                                    '/^url\(([^\'"].*?[^\'"])\)/i',
-                                    substr($src, $ptr),
-                                    $parts
-                                )
+                            if ($ext[0] == 'css' && preg_match(
+                                '/^url\(([^\'"].*?[^\'"])\)/i',
+                                substr($src, $ptr),
+                                $parts
+                            )
                             ) {
                                 $data .= $parts[0];
                                 $ptr += strlen($parts[0]);
@@ -897,11 +879,10 @@ class Web extends Prefab
                                         // Pattern should be preceded by
                                         // open parenthesis, colon,
                                         // object property or operator
-                                        if (
-                                            preg_match(
-                                                '/(return|[(:=!+\-*&|])$/',
-                                                substr($src, 0, $ofs)
-                                            )
+                                        if (preg_match(
+                                            '/(return|[(:=!+\-*&|])$/',
+                                            substr($src, 0, $ofs)
+                                        )
                                         ) {
                                             $data .= '/';
                                             ++$ptr;
@@ -948,8 +929,7 @@ class Web extends Prefab
                                 continue;
                             }
                             if (ctype_space($src[$ptr])) {
-                                if (
-                                    $ptr + 1 < strlen($src) &&
+                                if ($ptr + 1 < strlen($src) &&
                                     preg_match(
                                         '/[\w' . ($ext[0] == 'css' ?
                                         '#\.%+\-*()\[\]' : '\$') . ']{2}|' .

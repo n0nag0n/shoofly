@@ -61,8 +61,7 @@ class OpenID extends Magic
             return false;
         }
         $type = array_values(preg_grep('/Content-Type:/', $req['headers']));
-        if (
-            $type &&
+        if ($type &&
             preg_match('/application\/xrds\+xml|text\/xml/', $type[0]) &&
             ($sxml = simplexml_load_string($req['body'])) &&
             ($xrds = json_decode(json_encode($sxml), true)) &&
@@ -74,8 +73,7 @@ class OpenID extends Magic
                 $svc = $svc[0];
             }
             $svc_type = is_array($svc['Type']) ? $svc['Type'] : array($svc['Type']);
-            if (
-                preg_grep('/http:\/\/specs\.openid\.net\/auth\/2.0\/' .
+            if (preg_grep('/http:\/\/specs\.openid\.net\/auth\/2.0\/' .
                     '(?:server|signon)/', $svc_type)
             ) {
                 $this->args['provider'] = $svc['URI'];
@@ -94,16 +92,14 @@ class OpenID extends Magic
             $ptr = 0;
             // Parse document
             while ($ptr < $len) {
-                if (
-                    preg_match(
-                        '/^<link\b((?:\h+\w+\h*=\h*' .
+                if (preg_match(
+                    '/^<link\b((?:\h+\w+\h*=\h*' .
                         '(?:"(?:.+?)"|\'(?:.+?)\'))*)\h*\/?>/is',
-                        substr($req['body'], $ptr),
-                        $parts
-                    )
+                    substr($req['body'], $ptr),
+                    $parts
+                )
                 ) {
-                    if (
-                        $parts[1] &&
+                    if ($parts[1] &&
                         // Process attributes
                         preg_match_all(
                             '/\b(rel|href)\h*=\h*' .
@@ -117,8 +113,7 @@ class OpenID extends Magic
                         foreach ($attr as $kv) {
                             $node[$kv[1]] = isset($kv[2]) ? $kv[2] : $kv[3];
                         }
-                        if (
-                            isset($node['rel']) &&
+                        if (isset($node['rel']) &&
                             preg_match(
                                 '/openid2?\.(\w+)/',
                                 $node['rel'],
@@ -220,8 +215,7 @@ class OpenID extends Magic
         foreach ($matches as $match) {
             $this->args[$match[1]] = urldecode($match[2]);
         }
-        if (
-            isset($this->args['mode']) &&
+        if (isset($this->args['mode']) &&
             $this->args['mode'] != 'error' &&
             $this->url = $this->discover($proxy)
         ) {

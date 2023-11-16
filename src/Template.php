@@ -328,15 +328,14 @@ class Template extends Preview
         $text = parent::parse($text);
         // Build tree structure
         for ($ptr = 0,$w = 5,$len = strlen($text),$tree = [],$tmp = ''; $ptr < $len;) {
-            if (
-                preg_match(
-                    '/^(.{0,' . $w . '}?)<(\/?)(?:F3:)?' .
+            if (preg_match(
+                '/^(.{0,' . $w . '}?)<(\/?)(?:F3:)?' .
                     '(' . $this->tags . ')\b((?:\s+[\w.:@!\-]+' .
                     '(?:\h*=\h*(?:"(?:.*?)"|\'(?:.*?)\'))?|' .
                     '\h*\{\{.+?\}\})*)\h*(\/?)>/is',
-                    substr($text, $ptr),
-                    $match
-                )
+                substr($text, $ptr),
+                $match
+            )
             ) {
                 if (strlen($tmp) || isset($match[1])) {
                     $tree[] = $tmp . $match[1];
@@ -347,8 +346,7 @@ class Template extends Preview
                     $stack = [];
                     for ($i = count($tree) - 1; $i >= 0; --$i) {
                         $item = $tree[$i];
-                        if (
-                            is_array($item) &&
+                        if (is_array($item) &&
                             array_key_exists($k = strtolower($match[3]), $item) &&
                             !isset($item[$k][0])
                         ) {

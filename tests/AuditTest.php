@@ -1,4 +1,7 @@
 <?php
+
+namespace Shoofly\Tests;
+
 use PHPUnit\Framework\TestCase;
 use Shoofly\Audit;
 use Shoofly\Base;
@@ -103,8 +106,8 @@ class AuditTest extends TestCase
         $this->assertTrue($audit->isreserved('127.0.0.1'));
         $this->assertTrue($audit->isreserved('0.1.2.3'));
         $this->assertTrue($audit->isreserved('169.254.1.2'));
-		$this->assertFalse($audit->isreserved('192.0.2.1'));
-		$this->assertFalse($audit->isreserved('192.168.0.1'));
+        $this->assertFalse($audit->isreserved('192.0.2.1'));
+        $this->assertFalse($audit->isreserved('192.168.0.1'));
         $this->assertFalse($audit->isreserved('224.225.226.227'));
         $this->assertTrue($audit->isreserved('240.241.242.243'));
     }
@@ -151,7 +154,6 @@ class AuditTest extends TestCase
     {
         global $f3;
         $audit = new Audit();
-		$this->assertTrue($audit->ismobile('iPhone Mozilla User Agent 4.0'));
+        $this->assertTrue($audit->ismobile('iPhone Mozilla User Agent 4.0'));
     }
-
 }

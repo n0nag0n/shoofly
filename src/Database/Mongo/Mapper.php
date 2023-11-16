@@ -171,12 +171,11 @@ class Mapper extends Cursor
         }
         $fw = Base::instance();
         $cache = Cache::instance();
-        if (
-            !($cached = $cache->exists(
-                $hash = $fw->hash($this->db->dsn() .
+        if (!($cached = $cache->exists(
+            $hash = $fw->hash($this->db->dsn() .
                 $fw->stringify([$fields,$filter,$options])) . ($tag ? '.' . $tag : '') . '.mongo',
-                $result
-            )) || !$ttl || $cached[0] + $ttl < microtime(true)
+            $result
+        )) || !$ttl || $cached[0] + $ttl < microtime(true)
         ) {
             if ($options['group']) {
                 $grp = $this->collection->group(
@@ -273,10 +272,9 @@ class Mapper extends Cursor
         if (is_array($ttl)) {
             list($ttl,$tag) = $ttl;
         }
-        if (
-            !($cached = $cache->exists($hash = $fw->hash($fw->stringify(
-                [$filter]
-            )) . ($tag ? '.' . $tag : '') . '.mongo', $result)) || !$ttl ||
+        if (!($cached = $cache->exists($hash = $fw->hash($fw->stringify(
+            [$filter]
+        )) . ($tag ? '.' . $tag : '') . '.mongo', $result)) || !$ttl ||
             $cached[0] + $ttl < microtime(true)
         ) {
             $result = $this->collection->count($filter ?: []);
@@ -312,8 +310,7 @@ class Mapper extends Cursor
         if (isset($this->document['_id'])) {
             return $this->update();
         }
-        if (
-            isset($this->trigger['beforeinsert']) &&
+        if (isset($this->trigger['beforeinsert']) &&
             Base::instance()->call(
                 $this->trigger['beforeinsert'],
                 [$this,['_id' => $this->document['_id']]]
@@ -345,8 +342,7 @@ class Mapper extends Cursor
     public function update()
     {
         $pkey = ['_id' => $this->document['_id']];
-        if (
-            isset($this->trigger['beforeupdate']) &&
+        if (isset($this->trigger['beforeupdate']) &&
             Base::instance()->call(
                 $this->trigger['beforeupdate'],
                 [$this,$pkey]
@@ -391,8 +387,7 @@ class Mapper extends Cursor
                 $this->collection->deletemany($filter);
         }
         $pkey = ['_id' => $this->document['_id']];
-        if (
-            isset($this->trigger['beforeerase']) &&
+        if (isset($this->trigger['beforeerase']) &&
             Base::instance()->call(
                 $this->trigger['beforeerase'],
                 [$this,$pkey]

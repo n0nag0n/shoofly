@@ -52,8 +52,7 @@ class Agent
         $this->uri = $uri;
         $this->headers = $hdrs;
 
-        if (
-            isset($server->events['connect']) &&
+        if (isset($server->events['connect']) &&
             is_callable($func = $server->events['connect'])
         ) {
             $func($this);
@@ -65,8 +64,7 @@ class Agent
     **/
     public function __destruct()
     {
-        if (
-            isset($this->server->events['disconnect']) &&
+        if (isset($this->server->events['disconnect']) &&
             is_callable($func = $this->server->events['disconnect'])
         ) {
             $func($this);
@@ -150,8 +148,7 @@ class Agent
         if (is_bool($server->write($this->socket, $buf))) {
             return false;
         }
-        if (
-            !in_array($op, [Websocket::Pong,Websocket::Close]) &&
+        if (!in_array($op, [Websocket::Pong,Websocket::Close]) &&
             isset($this->server->events['send']) &&
             is_callable($func = $this->server->events['send'])
         ) {
@@ -206,8 +203,7 @@ class Agent
                     $data = trim($data);
                     // I hope this is intentional
                 case Websocket::Binary:
-                    if (
-                        isset($this->server->events['receive']) &&
+                    if (isset($this->server->events['receive']) &&
                         is_callable($func = $this->server->events['receive'])
                     ) {
                         $func($this, $op, $data);

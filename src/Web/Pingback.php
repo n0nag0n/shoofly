@@ -61,8 +61,7 @@ class Pingback extends Prefab
                     break;
                 }
             }
-            if (
-                !$found &&
+            if (!$found &&
                 // Scan page for pingback link tag
                 preg_match('/<link\h+(.+?)\h*\/?>/i', $req['body'], $parts) &&
                 preg_match('/rel\h*=\h*"pingback"/i', $parts[1]) &&
@@ -85,8 +84,7 @@ class Pingback extends Prefab
         $fw = Base::instance();
         $web = Web::instance();
         $parts = parse_url($source);
-        if (
-            empty($parts['scheme']) || empty($parts['host']) ||
+        if (empty($parts['scheme']) || empty($parts['host']) ||
             $parts['host'] == $fw->HOST
         ) {
             $req = $web->request($source);
@@ -150,8 +148,7 @@ class Pingback extends Prefab
             $doc = new \DOMDocument('1.0', $fw->ENCODING);
             // Check local page if pingback-enabled
             $parts = parse_url($permalink);
-            if (
-                (empty($parts['scheme']) ||
+            if ((empty($parts['scheme']) ||
                 $parts['host'] == $fw->HOST) &&
                 preg_match('/^' . preg_quote($path, '/') . '/' .
                     ($fw->CASELESS ? 'i' : ''), $parts['path']) &&
@@ -159,8 +156,7 @@ class Pingback extends Prefab
             ) {
                 // Check source
                 $parts = parse_url($source);
-                if (
-                    (empty($parts['scheme']) ||
+                if ((empty($parts['scheme']) ||
                     $parts['host'] == $fw->HOST) &&
                     ($req = $web->request($source)) &&
                     $doc->loadhtml($req['body'])

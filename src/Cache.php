@@ -11,7 +11,7 @@ class Cache extends Prefab
     protected $dsn;
     //! Prefix for cache entries
     protected $prefix;
-    //! MemCache or Redis object
+    /** @var \Redis|\Memcached MemCache or Redis object */
     protected $ref;
 
     /**
@@ -23,6 +23,72 @@ class Cache extends Prefab
         if ($dsn) {
             $this->load($dsn);
         }
+    }
+
+    /**
+    *   Load/auto-detect cache backend
+    *   @return string
+    *   @param $dsn bool|string
+    *   @param $seed bool|string
+    **/
+    public function load($dsn, $seed = null)
+    {
+        $fw = Base::instance();
+        if ($dsn = trim((string) $dsn)) {
+            if (preg_match('/^redis=(.+)/', $dsn, $parts) &&
+                extension_loaded('redis')
+            ) {
+                list($host,$port,$db,$password) = explode(':', $parts[1]) + [1 => 6379,2 => null,3 => null];
+                $this->ref = new Redis();
+                if (!$this->ref->connect($host, $port, 2)) {
+                    $this->ref = null;
+                }
+                if (!empty($password)) {
+                    $this->ref->auth($password);
+                }
+                if (isset($db)) {
+                    $this->ref->select($db);
+                }
+            } elseif (preg_match('/^memcache=(.+)/', $dsn, $parts) &&
+                extension_loaded('memcache')
+            ) {
+                foreach ($fw->split($parts[1]) as $server) {
+                    list($host,$port) = explode(':', $server) + [1 => 11211];
+                    if (empty($this->ref)) {
+                        $this->ref = @memcache_connect($host, $port) ?: null;
+                    } else {
+                        memcache_add_server($this->ref, $host, $port);
+                    }
+                }
+            } elseif (preg_match('/^memcached=(.+)/', $dsn, $parts) &&
+                extension_loaded('memcached')
+            ) {
+                foreach ($fw->split($parts[1]) as $server) {
+                    list($host,$port) = explode(':', $server) + [1 => 11211];
+                    if (empty($this->ref)) {
+                        $this->ref = new \Memcached();
+                    }
+                    $this->ref->addServer($host, $port);
+                }
+            }
+            if (empty($this->ref) && !preg_match('/^folder\h*=/', $dsn)) {
+                $dsn = ($grep = preg_grep(
+                    '/^(apc|wincache|xcache)/',
+                    array_map('strtolower', get_loaded_extensions())
+                )) ?
+                    // Auto-detect
+                    current($grep) :
+                    // Use filesystem as fallback
+                    ('folder=' . $fw->TEMP . 'cache/');
+            }
+            if (preg_match('/^folder\h*=\h*(.+)/', $dsn, $parts) &&
+                    !is_dir($parts[1])
+            ) {
+                mkdir($parts[1], Base::MODE, true);
+            }
+        }
+        $this->prefix = $seed ?: $fw->SEED;
+        return $this->dsn = $dsn;
     }
 
     /**
@@ -60,7 +126,9 @@ class Cache extends Prefab
                 $raw = xcache_get($ndx);
                 break;
             case 'folder':
-                $raw = $fw->read($parts[1] . $ndx);
+                if (file_exists($parts[1] . $ndx) === true) {
+                    $raw = $fw->read($parts[1] . $ndx);
+                }
                 break;
         }
         if (!empty($raw)) {
@@ -210,7 +278,9 @@ class Cache extends Prefab
                 }
                 return true;
             case 'memcached':
-                foreach ($this->ref->getallkeys() ?: [] as $key) {
+                // not actually guaranteed to delete all the keys
+                // https://www.php.net/manual/en/memcached.getallkeys.php
+                foreach ($this->ref->getAllKeys() ?: [] as $key) {
                     if (preg_match($regex, $key)) {
                         $this->ref->delete($key);
                     }
@@ -242,7 +312,7 @@ class Cache extends Prefab
             case 'folder':
                 if ($glob = @glob($parts[1] . '*')) {
                     foreach ($glob as $file) {
-                        if (preg_match($regex, Applicationname($file))) {
+                        if (preg_match($regex, basename($file))) {
                             @unlink($file);
                         }
                     }
@@ -250,75 +320,5 @@ class Cache extends Prefab
                 return true;
         }
         return false;
-    }
-
-    /**
-    *   Load/auto-detect cache backend
-    *   @return string
-    *   @param $dsn bool|string
-    *   @param $seed bool|string
-    **/
-    public function load($dsn, $seed = null)
-    {
-        $fw = Base::instance();
-        if ($dsn = trim($dsn)) {
-            if (
-                preg_match('/^redis=(.+)/', $dsn, $parts) &&
-                extension_loaded('redis')
-            ) {
-                list($host,$port,$db,$password) = explode(':', $parts[1]) + [1 => 6379,2 => null,3 => null];
-                $this->ref = new Redis();
-                if (!$this->ref->connect($host, $port, 2)) {
-                    $this->ref = null;
-                }
-                if (!empty($password)) {
-                    $this->ref->auth($password);
-                }
-                if (isset($db)) {
-                    $this->ref->select($db);
-                }
-            } elseif (
-                preg_match('/^memcache=(.+)/', $dsn, $parts) &&
-                extension_loaded('memcache')
-            ) {
-                foreach ($fw->split($parts[1]) as $server) {
-                    list($host,$port) = explode(':', $server) + [1 => 11211];
-                    if (empty($this->ref)) {
-                        $this->ref = @memcache_connect($host, $port) ?: null;
-                    } else {
-                        memcache_add_server($this->ref, $host, $port);
-                    }
-                }
-            } elseif (
-                preg_match('/^memcached=(.+)/', $dsn, $parts) &&
-                extension_loaded('memcached')
-            ) {
-                foreach ($fw->split($parts[1]) as $server) {
-                    list($host,$port) = explode(':', $server) + [1 => 11211];
-                    if (empty($this->ref)) {
-                        $this->ref = new Memcached();
-                    }
-                    $this->ref->addServer($host, $port);
-                }
-            }
-            if (empty($this->ref) && !preg_match('/^folder\h*=/', $dsn)) {
-                $dsn = ($grep = preg_grep(
-                    '/^(apc|wincache|xcache)/',
-                    array_map('strtolower', get_loaded_extensions())
-                )) ?
-                    // Auto-detect
-                    current($grep) :
-                    // Use filesystem as fallback
-                    ('folder=' . $fw->TEMP . 'cache/');
-            }
-            if (
-                    preg_match('/^folder\h*=\h*(.+)/', $dsn, $parts) &&
-                    !is_dir($parts[1])
-            ) {
-                mkdir($parts[1], Base::MODE, true);
-            }
-        }
-        $this->prefix = $seed ?: $fw->SEED;
-        return $this->dsn = $dsn;
     }
 }

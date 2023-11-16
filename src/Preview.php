@@ -52,12 +52,11 @@ class Preview extends View
     public function token($str)
     {
         $str = trim(preg_replace('/\{\{(.+?)\}\}/s', '\1', $this->fw->compile($str)));
-        if (
-            preg_match(
-                '/^(.+)(?<!\|)\|((?:\h*\w+(?:\h*[,;]?))+)$/s',
-                $str,
-                $parts
-            )
+        if (preg_match(
+            '/^(.+)(?<!\|)\|((?:\h*\w+(?:\h*[,;]?))+)$/s',
+            $str,
+            $parts
+        )
         ) {
             $str = trim($parts[1]);
             foreach ($this->fw->split(trim($parts[2], "\xC2\xA0")) as $func) {
@@ -149,14 +148,12 @@ class Preview extends View
             if (!is_dir($tmp = $fw->TEMP)) {
                 mkdir($tmp, Base::MODE, true);
             }
-            if (
-                !is_file($this->file = ($tmp .
+            if (!is_file($this->file = ($tmp .
                 $fw->SEED . '.' . $hash . '.php'))
             ) {
                 $fw->write($this->file, $this->build($node));
             }
-            if (
-                isset($_COOKIE[session_name()]) &&
+            if (isset($_COOKIE[session_name()]) &&
                 !headers_sent() && session_status() != PHP_SESSION_ACTIVE
             ) {
                 session_start();
@@ -221,8 +218,7 @@ class Preview extends View
                 return $data;
             }
             if (is_file($view = $fw->fixslashes($dir . $file))) {
-                if (
-                    !is_file($this->file = ($tmp .
+                if (!is_file($this->file = ($tmp .
                     $fw->SEED . '.' . $fw->hash($view) . '.php')) ||
                     filemtime($this->file) < filemtime($view)
                 ) {
@@ -235,8 +231,7 @@ class Preview extends View
                     $text = $this->parse($contents);
                     $fw->write($this->file, $this->build($text));
                 }
-                if (
-                    isset($_COOKIE[session_name()]) &&
+                if (isset($_COOKIE[session_name()]) &&
                     !headers_sent() && session_status() != PHP_SESSION_ACTIVE
                 ) {
                     session_start();

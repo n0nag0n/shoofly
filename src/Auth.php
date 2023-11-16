@@ -164,8 +164,7 @@ class Auth
             }
         );
         $dc = @ldap_connect($this->args['dc'], $port);
-        if (
-            $dc &&
+        if ($dc &&
             ldap_set_option($dc, LDAP_OPT_PROTOCOL_VERSION, 3) &&
             ldap_set_option($dc, LDAP_OPT_REFERRALS, 0) &&
             ldap_bind($dc, $this->args['rdn'], $this->args['pw']) &&
@@ -210,17 +209,15 @@ class Auth
                 fputs($socket, $cmd . "\r\n");
             }
             $reply = '';
-            while (
-                !feof($socket) &&
+            while (!feof($socket) &&
                 ($info = stream_get_meta_data($socket)) &&
                 !$info['timed_out'] && $str = fgets($socket, 4096)
             ) {
                 $reply .= $str;
-                if (
-                    preg_match(
-                        '/(?:^|\n)\d{3} .+\r\n/s',
-                        $reply
-                    )
+                if (preg_match(
+                    '/(?:^|\n)\d{3} .+\r\n/s',
+                    $reply
+                )
                 ) {
                     break;
                 }
@@ -283,8 +280,7 @@ class Auth
             list($_SERVER['PHP_AUTH_USER'],$_SERVER['PHP_AUTH_PW']) =
                 explode(':', base64_decode(substr($hdr, 6)));
         }
-        if (
-            isset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']) &&
+        if (isset($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']) &&
             $this->login(
                 $_SERVER['PHP_AUTH_USER'],
                 $func ?

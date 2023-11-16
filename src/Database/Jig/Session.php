@@ -109,8 +109,7 @@ class Session extends Mapper
         }
         if ($this->get('ip') != $this->ip || $this->get('agent') != $this->agent) {
             $fw = Base::instance();
-            if (
-                !isset($this->onsuspect) ||
+            if (!isset($this->onsuspect) ||
                 $fw->call($this->onsuspect, [$this,$id]) === false
             ) {
                 // NB: `session_destroy` can't be called at that stage;

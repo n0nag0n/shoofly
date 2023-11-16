@@ -211,12 +211,11 @@ class Mapper extends Cursor
         if (is_array($ttl)) {
             list($ttl,$tag) = $ttl;
         }
-        if (
-            !$fw->CACHE || !$ttl || !($cached = $cache->exists(
-                $hash = $fw->hash($this->db->dir() .
+        if (!$fw->CACHE || !$ttl || !($cached = $cache->exists(
+            $hash = $fw->hash($this->db->dir() .
                 $fw->stringify([$filter,$options])) . ($tag ? '.' . $tag : '') . '.jig',
-                $data
-            )) ||
+            $data
+        )) ||
             $cached[0] + $ttl < microtime(true)
         ) {
             $data = $db->read($this->file);
@@ -263,8 +262,7 @@ class Mapper extends Cursor
                                     }
                                     continue;
                                 }
-                            } elseif (
-                                $named &&
+                            } elseif ($named &&
                                 token_name($token[0]) == 'T_STRING'
                             ) {
                                 $key = ':' . $token[1];
@@ -298,8 +296,7 @@ class Mapper extends Cursor
                     }
                     $drop = false;
                     foreach ($cols as $col) {
-                        if (
-                            $prev_i != $i && array_key_exists($col, $row) &&
+                        if ($prev_i != $i && array_key_exists($col, $row) &&
                             array_key_exists($col, $prev) && $row[$col] == $prev[$col]
                         ) {
                             // reduce/modify
@@ -391,8 +388,7 @@ class Mapper extends Cursor
                         $val2[$col] = null;
                     }
                     list($v1,$v2) = [$val1[$col],$val2[$col]];
-                    if (
-                        $out = strnatcmp($v1 ?: '', $v2 ?: '') *
+                    if ($out = strnatcmp($v1 ?: '', $v2 ?: '') *
                         (($order == SORT_ASC) * 2 - 1)
                     ) {
                         return $out;
@@ -458,8 +454,7 @@ class Mapper extends Cursor
         }
         $db = $this->db;
         $now = microtime(true);
-        while (
-            ($id = uniqid('', true)) &&
+        while (($id = uniqid('', true)) &&
             ($data=&$db->read($this->file)) && isset($data[$id]) &&
             !connection_aborted()
         ) {
@@ -467,8 +462,7 @@ class Mapper extends Cursor
         }
         $this->db_id = $id;
         $pkey = ['_id' => $this->db_id];
-        if (
-            isset($this->trigger['beforeinsert']) &&
+        if (isset($this->trigger['beforeinsert']) &&
             Base::instance()->call(
                 $this->trigger['beforeinsert'],
                 [$this,$pkey]
@@ -499,8 +493,7 @@ class Mapper extends Cursor
         $db = $this->db;
         $now = microtime(true);
         $data=&$db->read($this->file);
-        if (
-            isset($this->trigger['beforeupdate']) &&
+        if (isset($this->trigger['beforeupdate']) &&
             Base::instance()->call(
                 $this->trigger['beforeupdate'],
                 [$this,['_id' => $this->db_id]]
@@ -546,8 +539,7 @@ class Mapper extends Cursor
         } else {
             return false;
         }
-        if (
-            !$quick && isset($this->trigger['beforeerase']) &&
+        if (!$quick && isset($this->trigger['beforeerase']) &&
             Base::instance()->call(
                 $this->trigger['beforeerase'],
                 [$this,$pkey]

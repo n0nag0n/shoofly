@@ -190,8 +190,7 @@ class Smtp extends Magic
             if ($cmd) {
                 fputs($socket, $cmd . "\r\n");
             }
-            while (
-                !feof($socket) && ($info = stream_get_meta_data($socket)) &&
+            while (!feof($socket) && ($info = stream_get_meta_data($socket)) &&
                 !$info['timed_out'] && $str = fgets($socket, 4096)
             ) {
                 $reply .= $str;
@@ -344,8 +343,7 @@ class Smtp extends Magic
         unset($headers['Sender']);
         // Start message dialog
         $this->dialog('MAIL FROM: ' . $from, $log, $mock);
-        foreach (
-            $fw->split($headers['To'] .
+        foreach ($fw->split($headers['To'] .
             (isset($headers['Cc']) ? (';' . $headers['Cc']) : '') .
             (isset($headers['Bcc']) ? (';' . $headers['Bcc']) : '')) as $dst
         ) {

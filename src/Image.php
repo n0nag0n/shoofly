@@ -760,8 +760,7 @@ class Image
     public function restore($state = 1)
     {
         $fw = Base::instance();
-        if (
-            $this->flag && is_file($file = ($path = $fw->TEMP .
+        if ($this->flag && is_file($file = ($path = $fw->TEMP .
             $fw->SEED . '.' . $fw->hash($this->file) . '-') . $state . '.png')
         ) {
             if (is_resource($this->data)) {
@@ -770,8 +769,7 @@ class Image
             $this->data = imagecreatefromstring($fw->read($file));
             imagesavealpha($this->data, true);
             foreach (glob($path . '*.png', GLOB_NOSORT) as $match) {
-                if (
-                    preg_match('/-(\d+)\.png/', $match, $parts) &&
+                if (preg_match('/-(\d+)\.png/', $match, $parts) &&
                     $parts[1] > $state
                 ) {
                     @unlink($match);

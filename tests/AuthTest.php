@@ -1,4 +1,7 @@
 <?php
+
+namespace Shoofly\Tests;
+
 use PHPUnit\Framework\TestCase;
 use Shoofly\Base;
 use Shoofly\Auth;
@@ -7,20 +10,20 @@ use Shoofly\Registry;
 
 class AuthTest extends TestCase
 {
-
-	public function tearDown(): void {
-		if (!is_dir('tmp/')) {
+    public function tearDown(): void
+    {
+        if (!is_dir('tmp/')) {
             mkdir('tmp/', Base::MODE, true);
         }
 
-		Registry::clear(Base::class);
-	}
+        Registry::clear(Base::class);
+    }
 
     public function testHTTPBasicAuthMechanism()
     {
         $f3 = Base::instance();
-		$f3->SERVER['PHP_AUTH_USER'] = 'admin';
-		$f3->SERVER['PHP_AUTH_PW'] = 'secret';
+        $f3->SERVER['PHP_AUTH_USER'] = 'admin';
+        $f3->SERVER['PHP_AUTH_PW'] = 'secret';
 
         $db = new Jig('tmp/');
         $db->drop();

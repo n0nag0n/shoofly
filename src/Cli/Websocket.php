@@ -71,12 +71,11 @@ class Websocket
         $verb = null;
         $uri = null;
         foreach (explode($EOL, trim($buf)) as $line) {
-            if (
-                preg_match(
-                    '/^(\w+)\s(.+)\sHTTP\/[\d.]{1,3}$/',
-                    trim($line),
-                    $match
-                )
+            if (preg_match(
+                '/^(\w+)\s(.+)\sHTTP\/[\d.]{1,3}$/',
+                trim($line),
+                $match
+            )
             ) {
                 $verb = $match[1];
                 $uri = $match[2];
@@ -98,8 +97,7 @@ class Websocket
                 return;
             }
         }
-        if (
-            empty($hdrs['Upgrade']) &&
+        if (empty($hdrs['Upgrade']) &&
             empty($hdrs['Sec-Websocket-Key'])
         ) {
             // Not a WebSocket request
@@ -158,14 +156,12 @@ class Websocket
         if (!$len) {
             $len = Websocket::Packet;
         }
-        if (
-            is_string($buf = @fread($socket, $len)) &&
+        if (is_string($buf = @fread($socket, $len)) &&
             strlen($buf) && strlen($buf) < $len
         ) {
             return $buf;
         }
-        if (
-            isset($this->events['error']) &&
+        if (isset($this->events['error']) &&
             is_callable($func = $this->events['error'])
         ) {
             $func($this);
@@ -183,14 +179,12 @@ class Websocket
     public function write($socket, $buf)
     {
         for ($i = 0,$bytes = 0; $i < strlen($buf); $i += $bytes) {
-            if (
-                ($bytes = @fwrite($socket, substr($buf, $i))) &&
+            if (($bytes = @fwrite($socket, substr($buf, $i))) &&
                 @fflush($socket)
             ) {
                 continue;
             }
-            if (
-                isset($this->events['error']) &&
+            if (isset($this->events['error']) &&
                 is_callable($func = $this->events['error'])
             ) {
                 $func($this);
@@ -275,8 +269,7 @@ class Websocket
                 }
             }
             $this->close($listen);
-            if (
-                isset($this->events['stop']) &&
+            if (isset($this->events['stop']) &&
                 is_callable($func = $this->events['stop'])
             ) {
                 $func($this);
@@ -285,8 +278,7 @@ class Websocket
         if ($errstr) {
             user_error($errstr, E_USER_ERROR);
         }
-        if (
-            isset($this->events['start']) &&
+        if (isset($this->events['start']) &&
             is_callable($func = $this->events['start'])
         ) {
             $func($this);
@@ -305,8 +297,7 @@ class Websocket
                 round(1e6 * ($wait - (int)$wait))
             );
             if (is_bool($count) && $wait) {
-                if (
-                    isset($this->events['error']) &&
+                if (isset($this->events['error']) &&
                     is_callable($func = $this->events['error'])
                 ) {
                     $func($this);
@@ -322,8 +313,7 @@ class Websocket
                     if ($socket == $listen) {
                         if ($socket = @stream_socket_accept($listen, 0)) {
                             $this->alloc($socket);
-                        } elseif (
-                            isset($this->events['error']) &&
+                        } elseif (isset($this->events['error']) &&
                             is_callable($func = $this->events['error'])
                         ) {
                             $func($this);
@@ -347,8 +337,7 @@ class Websocket
                     if (!is_resource($socket)) {
                         continue;
                     }
-                    if (
-                        $socket != $listen &&
+                    if ($socket != $listen &&
                         isset($this->agents[$id]) &&
                         isset($this->events['idle']) &&
                         is_callable($func = $this->events['idle'])

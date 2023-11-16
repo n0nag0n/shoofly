@@ -1,4 +1,7 @@
 <?php
+
+namespace Shoofly\Tests;
+
 use PHPUnit\Framework\TestCase;
 use Shoofly\Base;
 use Shoofly\Registry;
@@ -6,14 +9,14 @@ use Shoofly\Basket;
 
 class BasketTest extends TestCase
 {
-
-	public function tearDown(): void {
-		if (!is_dir('tmp/')) {
+    public function tearDown(): void
+    {
+        if (!is_dir('tmp/')) {
             mkdir('tmp/', Base::MODE, true);
         }
-		Base::instance()->SESSION = [];
-		Registry::clear(Base::class);
-	}
+        Base::instance()->SESSION = [];
+        Registry::clear(Base::class);
+    }
 
     public function testCursorInstantiated()
     {
@@ -41,7 +44,7 @@ class BasketTest extends TestCase
     {
         $basket = new Basket();
         $basket->load('item', 'port wine');
-		$this->assertTrue($basket->dry());
+        $this->assertTrue($basket->dry());
     }
 
     public function testItemAdded()
@@ -80,15 +83,15 @@ class BasketTest extends TestCase
         );
     }
 
-	public function testAnotherItemAdded()
+    public function testAnotherItemAdded()
     {
         $basket = new Basket();
-		$basket->set('item', 'lamb chops');
+        $basket->set('item', 'lamb chops');
         $basket->set('quantity', 1);
         $basket->set('price', 99.95);
         $basket->set('measure', 'pack of 8');
         $basket->save();
-		$basket->reset();
+        $basket->reset();
         $basket->set('item', 'blue cheese');
         $basket->set('quantity', 1);
         $basket->set('price', 7.50);
@@ -107,26 +110,30 @@ class BasketTest extends TestCase
     public function testCurrentItemCopiedToHiveVariable()
     {
         $basket = new Basket();
-		$f3 = Base::instance();
+        $f3 = Base::instance();
         $basket->copyto('foo');
         $this->assertEquals(
-            $f3->get('foo.item'), 'blue cheese' &&
-            $f3->get('foo.quantity'), 1 &&
-            $f3->get('foo.price'), 7.50 &&
-            $f3->get('foo.measure'), '12oz'
+            $f3->get('foo.item'),
+            'blue cheese' &&
+            $f3->get('foo.quantity'),
+            1 &&
+            $f3->get('foo.price'),
+            7.50 &&
+            $f3->get('foo.measure'),
+            '12oz'
         );
     }
 
     public function testLoadItemById()
     {
         $basket = new Basket();
-		$basket->item = 'lamb chops';
-		$basket->quantity = 1;
-		$basket->price = 99.95;
-		$basket->measure = 'pack of 8';
-		$basket->save();
-		$id = $basket->_id;
-		$basket->reset();
+        $basket->item = 'lamb chops';
+        $basket->quantity = 1;
+        $basket->price = 99.95;
+        $basket->measure = 'pack of 8';
+        $basket->save();
+        $id = $basket->_id;
+        $basket->reset();
         $basket->load('_id', $id);
         $this->assertTrue(
             $basket->get('item') == 'lamb chops' &&
@@ -139,11 +146,11 @@ class BasketTest extends TestCase
     public function testCheckOut()
     {
         $basket = new Basket();
-		$basket->item = 'lamb chops';
-		$basket->quantity = 1;
-		$basket->price = 99.95;
-		$basket->measure = 'pack of 8';
-		$basket->save();
+        $basket->item = 'lamb chops';
+        $basket->quantity = 1;
+        $basket->price = 99.95;
+        $basket->measure = 'pack of 8';
+        $basket->save();
         $this->assertEquals(
             array_values($basket->checkout()),
             [

@@ -132,8 +132,7 @@ class Mapper extends Cursor
         if (array_key_exists($key, $this->fields)) {
             $val = is_null($val) && $this->fields[$key]['nullable'] ?
                 null : $this->db->value($this->fields[$key]['pdo_type'], $val);
-            if (
-                $this->fields[$key]['initial'] !== $val ||
+            if ($this->fields[$key]['initial'] !== $val ||
                 $this->fields[$key]['default'] !== $val && is_null($val)
             ) {
                 $this->fields[$key]['changed'] = true;
@@ -312,8 +311,7 @@ class Mapper extends Cursor
                 $options['order']);
         }
         // SQL Server fixes
-        if (
-            preg_match('/mssql|sqlsrv|odbc/', $this->engine) &&
+        if (preg_match('/mssql|sqlsrv|odbc/', $this->engine) &&
             ($options['limit'] || $options['offset'])
         ) {
             // order by pkey when no ordering option was given
@@ -524,8 +522,7 @@ class Mapper extends Cursor
                 $pkeys[$key] = $field['previous'];
             }
         }
-        if (
-            isset($this->trigger['beforeinsert']) &&
+        if (isset($this->trigger['beforeinsert']) &&
             Base::instance()->call(
                 $this->trigger['beforeinsert'],
                 [$this,$pkeys]
@@ -537,8 +534,7 @@ class Mapper extends Cursor
             // duplicate record
             foreach ($this->fields as $key => &$field) {
                 $field['changed'] = true;
-                if (
-                    $field['pkey'] &&
+                if ($field['pkey'] &&
                     !$inc &&
                     ($field['auto_inc'] === true ||
                     ($field['auto_inc'] === null &&
@@ -557,8 +553,7 @@ class Mapper extends Cursor
             }
             if ($field['pkey']) {
                 $field['previous'] = $field['value'];
-                if (
-                    !$inc &&
+                if (!$inc &&
                     empty($field['value']) &&
                     ($field['auto_inc'] === true ||
                     ($field['auto_inc'] === null &&
@@ -642,8 +637,7 @@ class Mapper extends Cursor
                 $pkeys[$key] = $field['previous'];
             }
         }
-        if (
-            isset($this->trigger['beforeupdate']) &&
+        if (isset($this->trigger['beforeupdate']) &&
             Base::instance()->call(
                 $this->trigger['beforeupdate'],
                 [$this,$pkeys]
@@ -780,8 +774,7 @@ class Mapper extends Cursor
             unset($field);
         }
         parent::erase();
-        if (
-            isset($this->trigger['beforeerase']) &&
+        if (isset($this->trigger['beforeerase']) &&
             Base::instance()->call(
                 $this->trigger['beforeerase'],
                 [$this,$pkeys]

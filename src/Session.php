@@ -108,8 +108,7 @@ class Session extends Magic
         $this->data = $data;
         if ($data['ip'] != $this->ip || $data['agent'] != $this->agent) {
             $fw = Base::instance();
-            if (
-                !isset($this->onsuspect) ||
+            if (!isset($this->onsuspect) ||
                 $fw->call($this->onsuspect, [$this,$id]) === false
             ) {
                 //NB: `session_destroy` can't be called at that stage (`session_start` not completed)

@@ -70,8 +70,7 @@ class Geo extends Prefab
             FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6 |
             FILTER_FLAG_NO_RES_RANGE | FILTER_FLAG_NO_PRIV_RANGE
         );
-        if (
-            function_exists('geoip_db_avail') &&
+        if (function_exists('geoip_db_avail') &&
             geoip_db_avail(GEOIP_CITY_EDITION_REV1) &&
             $out = @geoip_record_by_name($ip)
         ) {
@@ -87,15 +86,13 @@ class Geo extends Prefab
             unset($out['country_code3'], $out['region'], $out['postal_code']);
             return $out;
         }
-        if (
-            ($req = $web->request('http://www.geoplugin.net/json.gp' .
+        if (($req = $web->request('http://www.geoplugin.net/json.gp' .
             ($public ? ('?ip=' . $ip) : ''))) &&
             $data = json_decode($req['body'], true)
         ) {
             $out = [];
             foreach ($data as $key => $val) {
-                if (
-                    !strpos($key, 'currency') && $key !== 'geoplugin_status'
+                if (!strpos($key, 'currency') && $key !== 'geoplugin_status'
                     && $key !== 'geoplugin_region'
                 ) {
                     $out[$fw->snakecase(substr($key, 10))] = $val;

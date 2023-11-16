@@ -70,15 +70,13 @@ class View extends Prefab
             $hive = $fw->hive();
         }
         if ($this->level < 1 || $implicit) {
-            if (
-                !$fw->CLI && $mime && !headers_sent() &&
+            if (!$fw->CLI && $mime && !headers_sent() &&
                 !preg_grep('/^Content-Type:/', headers_list())
             ) {
                 header('Content-Type: ' . $mime . '; ' .
                     'charset=' . $fw->ENCODING);
             }
-            if (
-                $fw->ESCAPE && (!$mime ||
+            if ($fw->ESCAPE && (!$mime ||
                     preg_match('/^(text\/html|(application|text)\/(.+\+)?xml)$/i', $mime))
             ) {
                 $hive = $this->esc($hive);
@@ -115,8 +113,7 @@ class View extends Prefab
                 return $data;
             }
             if (is_file($this->file = $fw->fixslashes($dir . $file))) {
-                if (
-                    isset($_COOKIE[session_name()]) &&
+                if (isset($_COOKIE[session_name()]) &&
                     !headers_sent() && session_status() != PHP_SESSION_ACTIVE
                 ) {
                     session_start();

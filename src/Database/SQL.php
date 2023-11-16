@@ -231,12 +231,11 @@ class SQL
             }
             $now = microtime(true);
             $keys = $vals = [];
-            if (
-                $fw->CACHE && $ttl && ($cached = $cache->exists(
-                    $hash = $fw->hash($this->dsn . $cmd .
+            if ($fw->CACHE && $ttl && ($cached = $cache->exists(
+                $hash = $fw->hash($this->dsn . $cmd .
                     $fw->stringify($arg)) . ($tag ? '.' . $tag : '') . '.sql',
-                    $result
-                )) &&
+                $result
+            )) &&
                 $cached[0] + $ttl > microtime(true)
             ) {
                 foreach ($arg as $key => $val) {
@@ -302,8 +301,7 @@ class SQL
                     }
                     user_error('PDOStatement: ' . $error[2], E_USER_ERROR);
                 }
-                if (
-                    preg_match('/(?:^[\s\(]*' .
+                if (preg_match('/(?:^[\s\(]*' .
                     '(?:WITH|EXPLAIN|SELECT|PRAGMA|SHOW)|RETURNING)\b/is', $cmd) ||
                     (preg_match('/^\s*(?:CALL|EXEC)\b/is', $cmd) &&
                         $query->columnCount())
@@ -394,8 +392,7 @@ class SQL
         if ($fw->CACHE && $ttl) {
             $hash = $fw->hash($this->dsn . $table . (is_array($fields) ? implode(',', $fields) : $fields)) . '.schema';
             $cached = $cache->exists($hash, $result);
-            if (
-                $cached &&
+            if ($cached &&
                 $cached[0] + $ttl > microtime(true)
             ) {
                 return $result;
