@@ -16,8 +16,9 @@
 		"phpunit/phpunit": "^9.6"
 	},
 	"scripts": {
-		"coverage" : "phpunit --coverage-html=.phpunit.cache/code-coverage/ --coverage-text",
+		"coverage" : "XDEBUG_MODE=coverage phpunit --coverage-html=.phpunit.cache/code-coverage/ --coverage-text",
 		"phpunit" : "phpunit",
+		"test" : "phpunit",
 		"phpcs" : "phpcs --standard=phpcs.xml -n",
 		"phpcbf" : "phpcbf --standard=phpcs.xml"
 	}

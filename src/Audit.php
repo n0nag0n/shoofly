@@ -55,10 +55,21 @@ class Audit extends Prefab
     **/
     public function email($str, $mx = true)
     {
-        $hosts = [];
         return is_string(filter_var($str, FILTER_VALIDATE_EMAIL)) &&
-            (!$mx || getmxrr(substr($str, strrpos($str, '@') + 1), $hosts));
+            (!$mx || $this->getMxRR(substr($str, strrpos($str, '@') + 1)));
     }
+
+	/**
+	 * Gets the mx record and if it has one, it returns true.
+	 *
+	 * @param string $hostname [description]
+	 * @return boolean
+	 * @codeCoverageIgnore
+	 */
+	protected function getMxRR(string $hostname): bool {
+        $hosts = [];
+		return getmxrr($hostname, $hosts);
+	}
 
     /**
     *   Return TRUE if string is a valid IPV4 address

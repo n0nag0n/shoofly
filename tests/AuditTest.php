@@ -38,7 +38,12 @@ class AuditTest extends TestCase
 
     public function testEmailAddressWithDomainVerification()
     {
-        $audit = new Audit();
+        $audit = new class() extends Audit {
+			protected function getMxRR(string $hostname): bool
+			{
+				return true;
+			}
+		};
         $this->assertFalse($audit->email('Abc.google.com'));
         $this->assertFalse($audit->email('Abc.@google.com'));
         $this->assertFalse($audit->email('Abc..123@google.com'));
