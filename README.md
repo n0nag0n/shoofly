@@ -36,11 +36,11 @@ For the documentation, see https://fatfreeframework.com/api-reference
 If you're going to do development on this codebase, you'll need to check the following commands before you commit:
 ```bash
 # Unit tests of course
-composer phpunit
+composer test # or composer phpunit
 
 # Beautify the code
-composer phpcbf
+composer beautify # or composer phpcbf
 
 # Check for code style issues
-composer phpcs
+composer style # or composer phpcs
 ```

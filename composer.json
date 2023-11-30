@@ -20,6 +20,8 @@
 		"phpunit" : "phpunit",
 		"test" : "phpunit",
 		"phpcs" : "phpcs --standard=phpcs.xml -n",
-		"phpcbf" : "phpcbf --standard=phpcs.xml"
+		"style" : "phpcs --standard=phpcs.xml -n",
+		"phpcbf" : "phpcbf --standard=phpcs.xml",
+		"beautify" : "phpcbf --standard=phpcs.xml"
 	}
 }
